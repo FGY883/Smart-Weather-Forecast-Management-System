@@ -1,5 +1,6 @@
 package com.weather.controller;
 
+import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.weather.entity.*;
 import com.weather.service.*;
@@ -198,18 +199,22 @@ public class WeatherController {
         return "statistics";
     }
 
+    /**
+     * 预警列表页：直接从和风天气灾害预警 API 拉全国当前预警，
+     * 不再走本地阈值合成。空白时显示"暂无预警"提示。
+     */
     @GetMapping("/weather/warning")
     public String warnings(Model model) {
-        try {
-            weatherWarningService.expireOutdatedWarnings();
-            model.addAttribute("warnings", weatherWarningService.getAllActiveWarnings());
-        } catch (Exception e) {
-            model.addAttribute("warnings", Collections.emptyList());
-        }
+        JSONArray cityList = weatherWarningService.fetchAllWarningsFromApi();
+        model.addAttribute("cityList", cityList != null ? cityList : new JSONArray());
         model.addAttribute("user", userContext.currentUser());
         return "warnings";
     }
 
+    /**
+     * 查询某个城市的实时预警：直接打 /v7/warning/now，
+     * 模板渲染原始结构，避免再次落库造成延迟。
+     */
     @GetMapping("/weather/warning/search")
     public String warningSearch(@RequestParam(required = false) String city, Model model) {
         SysUser user = userContext.currentUser();
@@ -222,17 +227,19 @@ public class WeatherController {
             String cityCode = firstCityCode(result);
             if (cityCode != null) {
                 String resolved = firstCityName(result, cityName);
-                weatherWarningService.checkAndGenerateWarnings(cityCode, resolved);
-                model.addAttribute("warnings", weatherWarningService.getActiveWarnings(cityCode));
+                JSONArray warnings = weatherWarningService.fetchWarningsFromApi(cityCode);
+                model.addAttribute("warnings", warnings);
                 model.addAttribute("searchCity", resolved);
                 model.addAttribute("searchCityCode", cityCode);
+                model.addAttribute("cityList", weatherWarningService.fetchAllWarningsFromApi());
             } else {
                 model.addAttribute("searchError", "未找到城市: " + cityName);
-                model.addAttribute("warnings", Collections.emptyList());
+                model.addAttribute("warnings", new JSONArray());
+                model.addAttribute("cityList", weatherWarningService.fetchAllWarningsFromApi());
             }
         } catch (Exception e) {
-            model.addAttribute("searchError", "搜索失败，请稍后重试");
-            model.addAttribute("warnings", Collections.emptyList());
+            model.addAttribute("searchError", "查询失败：" + e.getMessage());
+            model.addAttribute("warnings", new JSONArray());
         }
         model.addAttribute("user", user);
         return "warnings";

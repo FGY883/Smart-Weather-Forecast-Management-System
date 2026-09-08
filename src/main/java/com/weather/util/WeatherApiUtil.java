@@ -83,6 +83,60 @@ public class WeatherApiUtil {
     }
 
     /**
+     * 直接调用和风天气灾害预警接口获取某城市正在生效的预警列表。
+     *
+     * 返回原始 JSON 数组，不做业务映射。调用方拿到 JSON 后可按需渲染到模板或落库。
+     * 接口返回码 200 时 warning 数组可能为空但仍属成功；返回 404 / 其他码视为调用失败返回 null。
+     */
+    public JSONArray fetchActiveWarnings(String cityCode) {
+        if (cityCode == null || cityCode.isEmpty()) {
+            return null;
+        }
+        String url = baseUrl + "/warning/now?location=" + cityCode + "&key=" + apiKey;
+        log.debug("查询灾害预警URL: {}", url);
+        String resp = doGet(url);
+        if (resp == null) return null;
+        try {
+            JSONObject json = JSONObject.parseObject(resp);
+            String code = json.getString("code");
+            // 200 表示正常返回（含 warning 为空），其他码视为失败
+            if (!"200".equals(code)) {
+                log.warn("灾害预警API返回错误: cityCode={}, code={}, message={}", cityCode, code, json.getString("message"));
+                return null;
+            }
+            JSONArray warning = json.getJSONArray("warning");
+            return warning != null ? warning : new JSONArray();
+        } catch (Exception e) {
+            log.warn("灾害预警响应解析失败: cityCode={}, err={}", cityCode, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 获取全国当前所有正在生效的预警，按城市聚合（用于预警列表页）。
+     * 接口：/v7/warning/list?key=xxx
+     */
+    public JSONArray fetchAllActiveWarnings() {
+        String url = baseUrl + "/warning/list?key=" + apiKey;
+        log.debug("查询全国活跃预警URL: {}", url);
+        String resp = doGet(url);
+        if (resp == null) return null;
+        try {
+            JSONObject json = JSONObject.parseObject(resp);
+            String code = json.getString("code");
+            if (!"200".equals(code)) {
+                log.warn("全国预警API返回错误: code={}, message={}", code, json.getString("message"));
+                return null;
+            }
+            JSONArray list = json.getJSONArray("warningLocList");
+            return list != null ? list : new JSONArray();
+        } catch (Exception e) {
+            log.warn("全国预警响应解析失败: err={}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * 获取实时天气
      */
     public WeatherData getRealtimeWeather(String cityCode, String cityName) {

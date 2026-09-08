@@ -1,5 +1,6 @@
 package com.weather.service.impl;
 
+import com.alibaba.fastjson2.JSONArray;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.weather.entity.WeatherData;
@@ -7,6 +8,8 @@ import com.weather.entity.WeatherWarning;
 import com.weather.mapper.WeatherWarningMapper;
 import com.weather.service.WeatherDataService;
 import com.weather.service.WeatherWarningService;
+import com.weather.util.WeatherApiUtil;
+import com.weather.util.WeatherCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +29,15 @@ public class WeatherWarningServiceImpl extends ServiceImpl<WeatherWarningMapper,
 
     @Autowired
     private WeatherDataService weatherDataService;
+
+    @Autowired
+    private WeatherApiUtil weatherApiUtil;
+
+    @Autowired
+    private WeatherCache cache;
+
+    /** 预警是实时性要求高的数据，缓存窗口短一些，避免线上信息滞后 */
+    private static final Duration WARNING_TTL = Duration.ofMinutes(5);
 
     @Value("${ai.warning.high-temp-threshold:35}")
     private double highTempThreshold;
@@ -166,5 +179,33 @@ public class WeatherWarningServiceImpl extends ServiceImpl<WeatherWarningMapper,
         warning.setEndTime(LocalDateTime.now().plusDays(1));
         warning.setStatus(1);
         return warning;
+    }
+
+    @Override
+    public JSONArray fetchWarningsFromApi(String cityCode) {
+        if (cityCode == null || cityCode.isEmpty()) return new JSONArray();
+        String key = "warn:api:" + cityCode;
+        JSONArray cached = cache.get(key, JSONArray.class);
+        if (cached != null) {
+            return cached;
+        }
+        JSONArray fresh = weatherApiUtil.fetchActiveWarnings(cityCode);
+        // API 调用失败时返回空数组而不是 null，避免页面上看到一堆报错
+        JSONArray result = fresh != null ? fresh : new JSONArray();
+        cache.put(key, result, WARNING_TTL);
+        return result;
+    }
+
+    @Override
+    public JSONArray fetchAllWarningsFromApi() {
+        String key = "warn:api:all";
+        JSONArray cached = cache.get(key, JSONArray.class);
+        if (cached != null) {
+            return cached;
+        }
+        JSONArray fresh = weatherApiUtil.fetchAllActiveWarnings();
+        JSONArray result = fresh != null ? fresh : new JSONArray();
+        cache.put(key, result, WARNING_TTL);
+        return result;
     }
 }
