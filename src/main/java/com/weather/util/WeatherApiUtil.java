@@ -39,6 +39,14 @@ public class WeatherApiUtil {
     @Value("${weather.api.geo-url}")
     private String geoUrl;
 
+    /** 华风爱科 API Key（灾害预警数据源，和风预警为付费接口） */
+    @Value("${weather.weathercn.api-key:}")
+    private String weathercnApiKey;
+
+    /** 华风爱科域名 */
+    @Value("${weather.weathercn.base-url:https://openapi.weathercn.com}")
+    private String weathercnBaseUrl;
+
     /** 连接/读取超时（毫秒）：外部接口抖动时不能把 Tomcat 线程一直占住 */
     private static final int CONNECT_TIMEOUT = 3000;
     private static final int READ_TIMEOUT = 6000;
@@ -324,6 +332,66 @@ public class WeatherApiUtil {
             return EntityUtils.toString(response.getEntity(), "UTF-8");
         } catch (Exception e) {
             log.error("天气API请求失败: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /* ==================== 华风爱科（灾害预警数据源） ==================== */
+
+    /**
+     * 华风爱科城市搜索：把城市名转成 Location Key。
+     * 接口 /locations/v1/cities/translate 返回 JSON 数组，取第一条的 Key。
+     *
+     * @return Location Key（如北京 101924），失败返回 null
+     */
+    public String searchCityWeathercn(String cityName) {
+        if (cityName == null || cityName.isEmpty() || weathercnApiKey.isEmpty()) {
+            return null;
+        }
+        try {
+            String encoded = URLEncoder.encode(cityName, "UTF-8");
+            String url = weathercnBaseUrl + "/locations/v1/cities/translate"
+                    + "?apikey=" + weathercnApiKey
+                    + "&q=" + encoded
+                    + "&language=zh-cn";
+            log.debug("华风城市搜索URL: {}", url);
+            String resp = doGet(url);
+            if (resp == null) return null;
+            JSONArray arr = JSONArray.parseArray(resp);
+            if (arr == null || arr.isEmpty()) {
+                log.warn("华风城市搜索无结果: city={}", cityName);
+                return null;
+            }
+            JSONObject first = arr.getJSONObject(0);
+            return first.getString("Key");
+        } catch (Exception e) {
+            log.warn("华风城市搜索失败: city={}, err={}", cityName, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 华风爱科预警查询：按 Location Key 拉当前生效预警列表。
+     * 接口 /alerts/v1/{locationkey}.json 返回 JSON 数组（无预警时为空 []）。
+     *
+     * @return 预警对象数组，失败返回 null
+     */
+    public JSONArray fetchAlertsWeathercn(String locationKey) {
+        if (locationKey == null || locationKey.isEmpty() || weathercnApiKey.isEmpty()) {
+            return null;
+        }
+        try {
+            String url = weathercnBaseUrl + "/alerts/v1/" + locationKey + ".json"
+                    + "?apikey=" + weathercnApiKey
+                    + "&language=zh-cn"
+                    + "&details=true";
+            log.debug("华风预警查询URL: {}", url);
+            String resp = doGet(url);
+            if (resp == null) return null;
+            JSONArray arr = JSONArray.parseArray(resp);
+            return arr != null ? arr : new JSONArray();
+        } catch (Exception e) {
+            log.warn("华风预警查询失败: locationKey={}, err={}", locationKey, e.getMessage());
             return null;
         }
     }

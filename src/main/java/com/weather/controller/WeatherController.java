@@ -200,41 +200,19 @@ public class WeatherController {
     }
 
     /**
-     * 预警列表页：直接从和风天气灾害预警 API 拉全国当前预警，
-     * 不再走本地阈值合成。空白时显示"暂无预警"提示。
+     * 预警列表页：灾害预警数据源为华风爱科（和风预警为付费接口）。
+     * 华风按地点查询、无"全国预警列表"接口，故默认页给热门城市快捷入口。
      */
     @GetMapping("/weather/warning")
     public String warnings(Model model) {
-        JSONArray cityList = weatherWarningService.fetchAllWarningsFromApi();
-        int totalWarnings = sumWarningCounts(cityList);
-        model.addAttribute("cityList", cityList != null ? cityList : new JSONArray());
-        model.addAttribute("totalWarnings", totalWarnings);
+        model.addAttribute("hotCities", DEFAULT_CITIES);
         model.addAttribute("user", userContext.currentUser());
         return "warnings";
     }
 
     /**
-     * 把 JSONArray 里的 warningCount 累加。Ognl 在 Thymeleaf 里调
-     * stream() 有兼容性风险，这里提前算好放模型，模板直接 ${totalWarnings}。
-     */
-    private int sumWarningCounts(JSONArray cityList) {
-        if (cityList == null) return 0;
-        int total = 0;
-        for (int i = 0; i < cityList.size(); i++) {
-            Object row = cityList.get(i);
-            if (row instanceof JSONObject) {
-                Object cnt = ((JSONObject) row).get("warningCount");
-                if (cnt instanceof Number) {
-                    total += ((Number) cnt).intValue();
-                }
-            }
-        }
-        return total;
-    }
-
-    /**
-     * 查询某个城市的实时预警：直接打 /v7/warning/now，
-     * 模板渲染原始结构，避免再次落库造成延迟。
+     * 查询某个城市的实时预警：走华风爱科。
+     * 城市名 → Location Key → 预警列表，模板消费统一字段。
      */
     @GetMapping("/weather/warning/search")
     public String warningSearch(@RequestParam(required = false) String city, Model model) {
@@ -244,24 +222,14 @@ public class WeatherController {
         }
         String cityName = city.trim();
         try {
-            JSONObject result = weatherApiUtil.searchCity(cityName);
-            String cityCode = firstCityCode(result);
-            if (cityCode != null) {
-                String resolved = firstCityName(result, cityName);
-                JSONArray warnings = weatherWarningService.fetchWarningsFromApi(cityCode);
-                model.addAttribute("warnings", warnings);
-                model.addAttribute("searchCity", resolved);
-                model.addAttribute("searchCityCode", cityCode);
-                model.addAttribute("cityList", weatherWarningService.fetchAllWarningsFromApi());
-            } else {
-                model.addAttribute("searchError", "未找到城市: " + cityName);
-                model.addAttribute("warnings", new JSONArray());
-                model.addAttribute("cityList", weatherWarningService.fetchAllWarningsFromApi());
-            }
+            JSONArray warnings = weatherWarningService.fetchWarningsFromWeathercn(cityName);
+            model.addAttribute("warnings", warnings);
+            model.addAttribute("searchCity", cityName);
         } catch (Exception e) {
             model.addAttribute("searchError", "查询失败：" + e.getMessage());
             model.addAttribute("warnings", new JSONArray());
         }
+        model.addAttribute("hotCities", DEFAULT_CITIES);
         model.addAttribute("user", user);
         return "warnings";
     }

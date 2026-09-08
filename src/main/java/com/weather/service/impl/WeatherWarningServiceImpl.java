@@ -1,6 +1,7 @@
 package com.weather.service.impl;
 
 import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.weather.entity.WeatherData;
@@ -206,6 +207,75 @@ public class WeatherWarningServiceImpl extends ServiceImpl<WeatherWarningMapper,
         JSONArray fresh = weatherApiUtil.fetchAllActiveWarnings();
         JSONArray result = fresh != null ? fresh : new JSONArray();
         cache.put(key, result, WARNING_TTL);
+        return result;
+    }
+
+    @Override
+    public JSONArray fetchWarningsFromWeathercn(String cityName) {
+        if (cityName == null || cityName.isEmpty()) {
+            return new JSONArray();
+        }
+        String key = "warn:wc:" + cityName;
+        JSONArray cached = cache.get(key, JSONArray.class);
+        if (cached != null) {
+            return cached;
+        }
+        // 城市名 → Location Key → 预警列表
+        String locationKey = weatherApiUtil.searchCityWeathercn(cityName);
+        if (locationKey == null) {
+            return new JSONArray();
+        }
+        JSONArray raw = weatherApiUtil.fetchAlertsWeathercn(locationKey);
+        JSONArray result = normalizeWeathercnAlerts(raw);
+        cache.put(key, result, WARNING_TTL);
+        return result;
+    }
+
+    /**
+     * 把华风爱科预警的原始字段拍平成模板统一消费的结构。
+     * 华风用 AlarmLevel(Red/Orange/Yellow/Blue) + Level(红色/橙色)，
+     * 这里同时保留英文（供 CSS class level-* 用）和中文（供页面文字显示用）。
+     */
+    private JSONArray normalizeWeathercnAlerts(JSONArray raw) {
+        JSONArray result = new JSONArray();
+        if (raw == null || raw.isEmpty()) {
+            return result;
+        }
+        for (int i = 0; i < raw.size(); i++) {
+            JSONObject a = raw.getJSONObject(i);
+            if (a == null) continue;
+            JSONObject w = new JSONObject();
+
+            JSONObject desc = a.getJSONObject("Description");
+            w.put("title", desc != null && desc.getString("Localized") != null
+                    ? desc.getString("Localized") : a.getString("Type"));
+            w.put("typeName", a.getString("Type"));
+            w.put("type", a.getString("Category"));
+            // 英文等级用于 CSS 配色（level-Red / level-Orange / level-Yellow / level-Blue）
+            w.put("level", a.getString("AlarmLevel"));
+            // 中文等级用于页面文字（红色预警 / 橙色预警 ...）
+            w.put("levelName", a.getString("Level"));
+            w.put("sender", a.getString("Source"));
+
+            JSONArray areas = a.getJSONArray("Area");
+            if (areas != null && !areas.isEmpty()) {
+                JSONObject area = areas.getJSONObject(0);
+                if (area != null) {
+                    w.put("areaName", area.getString("Name"));
+                    w.put("startTime", area.getString("StartTime"));
+                    w.put("endTime", area.getString("EndTime"));
+                    w.put("text", area.getString("Text"));
+                    w.put("summary", area.getString("Summary"));
+                }
+            }
+
+            JSONObject color = a.getJSONObject("Color");
+            if (color != null) {
+                w.put("hexColor", color.getString("Hex"));
+            }
+            w.put("status", "Active");
+            result.add(w);
+        }
         return result;
     }
 }

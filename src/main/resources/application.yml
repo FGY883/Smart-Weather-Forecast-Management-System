@@ -52,6 +52,10 @@ weather:
     key: ${WEATHER_API_KEY:}
     base-url: https://n37mdb4xgk.re.qweatherapi.com/v7
     geo-url: https://n37mdb4xgk.re.qweatherapi.com/geo
+  # 灾害预警数据源（华风爱科，和风预警为付费接口故改接华风）
+  weathercn:
+    api-key: ${WEATHERCN_API_KEY:请在platform.weathercn.com注册后填写}
+    base-url: https://openapi.weathercn.com
 
 # AI预测配置
 ai:

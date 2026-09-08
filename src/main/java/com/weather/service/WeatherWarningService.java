@@ -26,4 +26,13 @@ public interface WeatherWarningService extends IService<WeatherWarning> {
      * 全国正在生效预警的城市列表，用于预警列表页顶部概览。
      */
     JSONArray fetchAllWarningsFromApi();
+
+    /**
+     * 通过华风爱科查询某城市当前生效的预警（和风预警为付费接口）。
+     * 内部会先做城市名→Location Key 的转换，再拉预警，并把结果规范化为
+     * 模板可直接消费的统一字段结构（title/level/levelName/sender/startTime/endTime/text 等）。
+     *
+     * @param cityName 城市名（如"北京"），非城市编码
+     */
+    JSONArray fetchWarningsFromWeathercn(String cityName);
 }

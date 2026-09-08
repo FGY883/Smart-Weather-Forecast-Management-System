@@ -20,6 +20,7 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -46,7 +47,7 @@ public class SecurityConfig {
                 new ConcurrentSessionControlAuthenticationStrategy(sessionRegistry);
         concurrent.setMaximumSessions(1);
         concurrent.setExceptionIfMaximumExceeded(false);
-        return new CompositeSessionAuthenticationStrategy(List.of(
+        return new CompositeSessionAuthenticationStrategy(Arrays.asList(
                 concurrent,
                 new RegisterSessionAuthenticationStrategy(sessionRegistry)
         ));
