@@ -120,12 +120,15 @@ public class WeatherWarningServiceImpl extends ServiceImpl<WeatherWarningMapper,
 
     @Override
     public int expireOutdatedWarnings() {
-        WeatherWarning update = new WeatherWarning();
-        update.setStatus(0);
-        int rows = update(update, new LambdaQueryWrapper<WeatherWarning>()
+        // 计数已过期的活跃预警条数，再统一置为无效（IService.update 返回 boolean）
+        LambdaQueryWrapper<WeatherWarning> wrapper = new LambdaQueryWrapper<WeatherWarning>()
                 .eq(WeatherWarning::getStatus, 1)
-                .lt(WeatherWarning::getEndTime, LocalDateTime.now()));
+                .lt(WeatherWarning::getEndTime, LocalDateTime.now());
+        int rows = Math.toIntExact(count(wrapper));
         if (rows > 0) {
+            WeatherWarning update = new WeatherWarning();
+            update.setStatus(0);
+            update(update, wrapper);
             log.info("自动解除过期预警: {} 条", rows);
         }
         return rows;

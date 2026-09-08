@@ -54,7 +54,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           SessionAuthenticationStrategy sessionAuthStrategy) throws Exception {
+                                           SessionAuthenticationStrategy sessionAuthStrategy,
+                                           SessionRegistry sessionRegistry) throws Exception {
         AuthenticationSuccessHandler successHandler = (request, response, authentication) -> {
             loginAttemptService.reset(authentication.getName());
             response.sendRedirect(request.getContextPath() + "/");
