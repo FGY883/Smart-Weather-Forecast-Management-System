@@ -4,10 +4,12 @@ import com.alibaba.fastjson2.JSONObject;
 import com.weather.entity.WeatherData;
 import com.weather.entity.WeatherWarning;
 import com.weather.util.WeatherApiUtil;
+import com.weather.util.WeatherCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -72,6 +74,11 @@ public class WeatherCardService {
     @Autowired
     private WeatherApiUtil weatherApiUtil;
 
+    @Autowired
+    private WeatherCache cache;
+
+    private static final Duration CARD_TTL = Duration.ofMinutes(10);
+
     /**
      * 装配一张城市卡所需的数据。
      *
@@ -80,6 +87,14 @@ public class WeatherCardService {
      *         拉取失败返回 null
      */
     public Map<String, Object> loadCity(String city) {
+        if (city == null || city.trim().isEmpty()) {
+            return null;
+        }
+        String key = "card:" + city.trim();
+        return cache.getOrLoad(key, Map.class, CARD_TTL, () -> assembleCityCard(city.trim()));
+    }
+
+    private Map<String, Object> assembleCityCard(String city) {
         try {
             String code = CITY_CODES.get(city);
             WeatherData now = (code == null) ? null : weatherDataService.getRealtimeWeather(code, city);

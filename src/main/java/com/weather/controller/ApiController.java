@@ -3,13 +3,11 @@ package com.weather.controller;
 import com.weather.common.Result;
 import com.weather.entity.*;
 import com.weather.service.*;
+import com.weather.util.UserContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -28,42 +26,51 @@ public class ApiController {
     private PushRecordService pushRecordService;
 
     @Autowired
-    private SysUserService userService;
+    private UserContext userContext;
 
     @PostMapping("/favorite/add")
     public Result<?> addFavorite(@RequestParam String city, @RequestParam String cityCode) {
-        SysUser user = getCurrentUser();
+        SysUser user = userContext.currentUser();
         if (user == null) return Result.error(401, "请先登录");
-        if (weatherFavoriteService.addFavorite(user.getId(), city, cityCode)) {
+        if (city == null || city.trim().isEmpty() || cityCode == null || cityCode.trim().isEmpty()) {
+            return Result.error(400, "参数不完整");
+        }
+        if (weatherFavoriteService.addFavorite(user.getId(), city.trim(), cityCode.trim())) {
             return Result.success("收藏成功");
         }
         return Result.error("已收藏该城市");
     }
 
     @PostMapping("/favorite/remove")
-    public Result<?> removeFavorite(@RequestParam Long favoriteId) {
-        SysUser user = getCurrentUser();
+    public Result<?> removeFavorite(@RequestParam(required = false) Long favoriteId,
+                                    @RequestParam(required = false) String cityCode) {
+        SysUser user = userContext.currentUser();
         if (user == null) return Result.error(401, "请先登录");
-        if (weatherFavoriteService.removeFavorite(user.getId(), favoriteId)) {
-            return Result.success("取消收藏成功");
+        if (favoriteId != null) {
+            return weatherFavoriteService.removeFavorite(user.getId(), favoriteId)
+                    ? Result.success("取消收藏成功") : Result.error("取消收藏失败");
         }
-        return Result.error("取消收藏失败");
+        if (cityCode != null && !cityCode.isEmpty()) {
+            boolean ok = weatherFavoriteService.removeByCityCode(user.getId(), cityCode);
+            return ok ? Result.success("取消收藏成功") : Result.error("未找到对应收藏");
+        }
+        return Result.error(400, "favoriteId 或 cityCode 必传");
     }
 
     @GetMapping("/favorite/list")
     public Result<List<WeatherFavorite>> listFavorites() {
-        SysUser user = getCurrentUser();
+        SysUser user = userContext.currentUser();
         if (user == null) return Result.error(401, "请先登录");
         return Result.success(weatherFavoriteService.getUserFavorites(user.getId()));
     }
 
     @PostMapping("/prediction/generate")
-    public Result<List<AiPrediction>> generatePrediction(@RequestParam String cityCode, @RequestParam String cityName) {
+    public Result<List<AiPrediction>> generatePrediction(@RequestParam String cityCode,
+                                                         @RequestParam String cityName) {
         try {
-            List<AiPrediction> predictions = aiPredictionService.generatePrediction(cityCode, cityName);
-            return Result.success(predictions);
+            return Result.success(aiPredictionService.generatePrediction(cityCode, cityName));
         } catch (Exception e) {
-            return Result.error("AI预测生成失败: " + e.getMessage());
+            return Result.error("AI 预测生成失败: " + e.getMessage());
         }
     }
 
@@ -78,17 +85,9 @@ public class ApiController {
     }
 
     @GetMapping("/push/records")
-    public Result<List<PushRecord>> getPushRecords() {
-        SysUser user = getCurrentUser();
+    public Result<List<PushRecord>> getPushRecords(@RequestParam(required = false, defaultValue = "20") int limit) {
+        SysUser user = userContext.currentUser();
         if (user == null) return Result.error(401, "请先登录");
-        return Result.success(pushRecordService.getUserPushRecords(user.getId()));
-    }
-
-    private SysUser getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
-            return null;
-        }
-        return userService.findByUsername(auth.getName());
+        return Result.success(pushRecordService.getUserPushRecords(user.getId(), limit));
     }
 }

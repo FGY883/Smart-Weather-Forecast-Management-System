@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -28,6 +29,11 @@ public class WeatherStatisticsServiceImpl extends ServiceImpl<WeatherStatisticsM
 
     @Autowired
     private WeatherApiUtil weatherApiUtil;
+
+    @Autowired
+    private WeatherCache cache;
+
+    private static final Duration STATS_TTL = Duration.ofHours(6);
 
     // 气候常理数据：{avgTemp, maxTemp, minTemp, humidity, precip, rainyDays, sunnyDays, cloudyDays}
     private static final Map<String, double[][]> CLIMATE_NORMALS = new HashMap<>();
@@ -192,6 +198,12 @@ public class WeatherStatisticsServiceImpl extends ServiceImpl<WeatherStatisticsM
             .eq(WeatherStatistics::getCityCode, cityCode)
             .eq(WeatherStatistics::getStatYear, year)
             .eq(WeatherStatistics::getStatMonth, month));
+        // 该城市该年的统计已变化，清掉列表缓存
+        cache.evict(statsCacheKey(cityCode, year));
+    }
+
+    private String statsCacheKey(String cityCode, int year) {
+        return "stats:" + cityCode + ":" + year;
     }
 
     /**
@@ -217,8 +229,7 @@ public class WeatherStatisticsServiceImpl extends ServiceImpl<WeatherStatisticsM
             // 从API获取7天预报
             List<WeatherData> forecast = weatherApiUtil.getForecast7Day(cityCode, cityName);
             if (forecast != null && !forecast.isEmpty()) {
-                // 保存到数据库
-                weatherDataService.saveBatch(forecast);
+                weatherDataService.saveOrUpdateData(forecast);
                 return forecast;
             }
         } catch (Exception e) {
@@ -388,9 +399,34 @@ public class WeatherStatisticsServiceImpl extends ServiceImpl<WeatherStatisticsM
 
     @Override
     public List<WeatherStatistics> getCityStatistics(String cityCode, int year) {
-        return list(new LambdaQueryWrapper<WeatherStatistics>()
+        String key = statsCacheKey(cityCode, year);
+        List<WeatherStatistics> cached = cache.get(key, List.class);
+        if (cached != null) {
+            return cached;
+        }
+        List<WeatherStatistics> stats = list(new LambdaQueryWrapper<WeatherStatistics>()
             .eq(WeatherStatistics::getCityCode, cityCode)
             .eq(WeatherStatistics::getStatYear, year)
             .orderByAsc(WeatherStatistics::getStatMonth));
+        if (stats != null && !stats.isEmpty()) {
+            cache.put(key, stats, STATS_TTL);
+        }
+        return stats;
+    }
+
+    @Override
+    public int countRealDataDays(String cityCode, int year) {
+        List<WeatherData> data = weatherDataService.getHistoryData(cityCode,
+                LocalDate.of(year, 1, 1), LocalDate.of(year, 12, 31));
+        if (data == null || data.isEmpty()) {
+            return 0;
+        }
+        Set<LocalDate> days = new HashSet<>();
+        for (WeatherData d : data) {
+            if (d.getWeatherDate() != null) {
+                days.add(d.getWeatherDate());
+            }
+        }
+        return days.size();
     }
 }

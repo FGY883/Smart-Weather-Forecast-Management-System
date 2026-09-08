@@ -8,4 +8,5 @@ public interface PushRecordService extends IService<PushRecord> {
     void pushDailyWeather(Long userId, String content);
     void pushWarning(Long userId, String content);
     List<PushRecord> getUserPushRecords(Long userId);
+    List<PushRecord> getUserPushRecords(Long userId, int limit);
 }

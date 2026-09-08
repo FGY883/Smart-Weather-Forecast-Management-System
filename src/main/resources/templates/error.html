@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${status != null ? status + ' - ' : ''}出错了 - 智能天气预报系统</title>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div th:replace="fragments :: navbar"></div>
+    <div class="container">
+        <div class="error-page">
+            <div class="code" th:text="${status}">500</div>
+            <h2>页面遇到问题</h2>
+            <p class="error-msg" th:text="${errorMsg}">请稍后再试</p>
+            <p class="path" th:if="${path}" th:text="${path}"></p>
+            <a th:href="@{/}" class="btn btn-primary">返回首页</a>
+        </div>
+    </div>
+    <div th:replace="fragments :: footer"></div>
+</body>
+</html>

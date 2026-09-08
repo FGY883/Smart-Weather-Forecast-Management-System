@@ -3,10 +3,13 @@ package com.weather.util;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.weather.entity.WeatherData;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +39,26 @@ public class WeatherApiUtil {
     @Value("${weather.api.geo-url}")
     private String geoUrl;
 
+    /** 连接/读取超时（毫秒）：外部接口抖动时不能把 Tomcat 线程一直占住 */
+    private static final int CONNECT_TIMEOUT = 3000;
+    private static final int READ_TIMEOUT = 6000;
+    private static final int MAX_RETRY = 2;
+
+    /**
+     * 全局共享的连接池。
+     * 原先每次请求都 HttpClients.createDefault()，既不复用连接也没有超时设置，
+     * 接口变慢时会迅速耗尽线程。
+     */
+    private static final CloseableHttpClient HTTP_CLIENT = HttpClients.custom()
+            .setConnectionManager(new PoolingHttpClientConnectionManager())
+            .setDefaultRequestConfig(RequestConfig.custom()
+                    .setConnectTimeout(CONNECT_TIMEOUT)
+                    .setConnectionRequestTimeout(CONNECT_TIMEOUT)
+                    .setSocketTimeout(READ_TIMEOUT)
+                    .build())
+            .setRetryHandler(new DefaultHttpRequestRetryHandler(MAX_RETRY, true))
+            .build();
+
     /**
      * 查询城市信息
      */
@@ -43,15 +66,14 @@ public class WeatherApiUtil {
         try {
             String encodedLocation = URLEncoder.encode(location, "UTF-8");
             String url = geoUrl + "/v2/city/lookup?location=" + encodedLocation + "&key=" + apiKey;
-            log.info("搜索城市URL: {}", url);
+            log.debug("搜索城市URL: {}", url);
             String resp = doGet(url);
-            log.info("搜索城市响应: {}", resp);
             if (resp != null) {
                 JSONObject json = JSONObject.parseObject(resp);
                 if ("200".equals(json.getString("code"))) {
                     return json;
                 } else {
-                    log.warn("城市搜索API返回错误: code={}, message={}", json.getString("code"), json.getString("message"));
+                    log.warn("城市搜索API返回错误: code={}", json.getString("code"));
                 }
             }
         } catch (Exception e) {
@@ -65,9 +87,9 @@ public class WeatherApiUtil {
      */
     public WeatherData getRealtimeWeather(String cityCode, String cityName) {
         String url = baseUrl + "/weather/now?location=" + cityCode + "&key=" + apiKey;
-        log.info("获取实时天气URL: {}", url);
+        log.debug("获取实时天气URL: {}", url);
         String resp = doGet(url);
-        log.info("实时天气响应: {}", resp);
+        log.debug("实时天气响应: {}", resp);
         if (resp == null) return null;
 
         JSONObject json = JSONObject.parseObject(resp);
@@ -100,9 +122,9 @@ public class WeatherApiUtil {
      */
     public List<WeatherData> getForecast7Day(String cityCode, String cityName) {
         String url = baseUrl + "/weather/7d?location=" + cityCode + "&key=" + apiKey;
-        log.info("获取7天预报URL: {}", url);
+        log.debug("获取7天预报URL: {}", url);
         String resp = doGet(url);
-        log.info("7天预报响应: {}", resp);
+        log.debug("7天预报响应: {}", resp);
         if (resp == null) return null;
 
         JSONObject json = JSONObject.parseObject(resp);
@@ -146,7 +168,7 @@ public class WeatherApiUtil {
             LocalDate date = LocalDate.now().minusDays(i);
             String url = baseUrl + "/historical/weather?location=" + cityCode
                     + "&date=" + date.format(fmt) + "&key=" + apiKey;
-            log.info("获取历史天气URL: {}", url);
+            log.debug("获取历史天气URL: {}", url);
             String resp = doGet(url);
             if (resp == null) continue;
 
@@ -237,17 +259,17 @@ public class WeatherApiUtil {
     }
 
     private String doGet(String url) {
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            HttpGet get = new HttpGet(url);
-            get.setHeader("User-Agent", "SmartWeather/1.0");
-            try (CloseableHttpResponse response = client.execute(get)) {
-                String body = EntityUtils.toString(response.getEntity(), "UTF-8");
-                log.info("API响应状态码: {}", response.getStatusLine().getStatusCode());
-                log.info("API响应内容: {}", body);
-                return body;
+        HttpGet get = new HttpGet(url);
+        get.setHeader("User-Agent", "SmartWeather/1.0");
+        try (CloseableHttpResponse response = HTTP_CLIENT.execute(get)) {
+            int status = response.getStatusLine().getStatusCode();
+            if (status != 200) {
+                log.warn("天气API返回异常状态码: {}, url={}", status, url);
+                return null;
             }
+            return EntityUtils.toString(response.getEntity(), "UTF-8");
         } catch (Exception e) {
-            log.error("天气API请求失败: {}", e.getMessage(), e);
+            log.error("天气API请求失败: {}", e.getMessage());
             return null;
         }
     }

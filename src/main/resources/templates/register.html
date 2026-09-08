@@ -4,98 +4,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>注册 - 智能天气预报系统</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <title>注册</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap-icons.css}">
     <link th:href="@{/css/style.css}" rel="stylesheet">
+    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
 </head>
-<body class="bg-light">
-    <!-- Aether 背景云朵漂移装饰 -->
-    <div class="skydeco" aria-hidden="true">
-        <div class="drift">☁</div>
-        <div class="drift">☁</div>
-        <div class="drift">☁</div>
-    </div>
+<body>
+<div th:replace="fragments :: navbar"></div>
 
-    <!-- 导航栏 -->
-    <div th:replace="fragments :: navbar"></div>
+<main class="container">
+    <div class="auth-card">
+        <h2>注册</h2>
+        <div class="subtitle">创建账号以使用个性化功能</div>
 
-    <!-- 注册表单 -->
-    <div class="container">
-        <div class="row justify-content-center mt-5">
-            <div class="col-md-6 col-lg-5">
-                <div class="card shadow-lg border-0 rounded-4">
-                    <div class="card-body p-5">
-                        <div class="text-center mb-4">
-                            <i class="bi bi-cloud-sun text-primary" style="font-size: 3rem;"></i>
-                            <h3 class="fw-bold mt-2">用户注册</h3>
-                            <p class="text-muted small">创建您的智能天气预报系统账号</p>
-                        </div>
+        <div th:if="${errorMsg}" class="alert-row alert-row--red mb-3">
+            <i class="bi bi-exclamation-circle"></i>
+            <div class="alert-row__body" th:text="${errorMsg}">错误</div>
+        </div>
 
-                        <!-- 错误消息 -->
-                        <div th:if="${errorMsg}" class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="bi bi-exclamation-circle me-1"></i>
-                            <span th:text="${errorMsg}"></span>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-
-                        <form th:action="@{/register}" method="post">
-                            <div class="mb-3">
-                                <label for="username" class="form-label">
-                                    <i class="bi bi-person me-1"></i>用户名 <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" class="form-control form-control-lg" id="username"
-                                       name="username" placeholder="请输入用户名" required autofocus>
-                            </div>
-                            <div class="mb-3">
-                                <label for="password" class="form-label">
-                                    <i class="bi bi-lock me-1"></i>密码 <span class="text-danger">*</span>
-                                </label>
-                                <input type="password" class="form-control form-control-lg" id="password"
-                                       name="password" placeholder="请输入密码（至少6位）" required minlength="6">
-                            </div>
-                            <div class="mb-3">
-                                <label for="nickname" class="form-label">
-                                    <i class="bi bi-tag me-1"></i>昵称
-                                </label>
-                                <input type="text" class="form-control form-control-lg" id="nickname"
-                                       name="nickname" placeholder="请输入昵称（选填）">
-                            </div>
-                            <div class="mb-3">
-                                <label for="email" class="form-label">
-                                    <i class="bi bi-envelope me-1"></i>邮箱
-                                </label>
-                                <input type="email" class="form-control form-control-lg" id="email"
-                                       name="email" placeholder="请输入邮箱（选填）">
-                            </div>
-                            <div class="mb-3">
-                                <label for="phone" class="form-label">
-                                    <i class="bi bi-phone me-1"></i>手机号
-                                </label>
-                                <input type="tel" class="form-control form-control-lg" id="phone"
-                                       name="phone" placeholder="请输入手机号（选填）">
-                            </div>
-                            <div class="d-grid mt-4">
-                                <button type="submit" class="btn btn-primary btn-lg rounded-3">
-                                    <i class="bi bi-person-plus me-1"></i>注 册
-                                </button>
-                            </div>
-                        </form>
-
-                        <div class="text-center mt-4">
-                            <span class="text-muted">已有账号？</span>
-                            <a th:href="@{/login}" class="text-decoration-none fw-bold">立即登录</a>
-                        </div>
-                    </div>
-                </div>
+        <form th:action="@{/register}" method="post">
+            <div class="form-group">
+                <label for="username">用户名 <span class="text-warm">*</span></label>
+                <input class="form-control form-control-lg" type="text" id="username" name="username" required autofocus placeholder="3-30 位，中英文 / 数字 / 下划线">
             </div>
+            <div class="form-group">
+                <label for="password">密码 <span class="text-warm">*</span></label>
+                <input class="form-control form-control-lg" type="password" id="password" name="password" minlength="6" required placeholder="至少 6 位">
+            </div>
+            <div class="form-group">
+                <label for="nickname">昵称</label>
+                <input class="form-control form-control-lg" type="text" id="nickname" name="nickname" placeholder="选填">
+            </div>
+            <div class="form-group">
+                <label for="email">邮箱</label>
+                <input class="form-control form-control-lg" type="email" id="email" name="email" placeholder="选填">
+            </div>
+            <div class="form-group">
+                <label for="phone">手机号</label>
+                <input class="form-control form-control-lg" type="tel" id="phone" name="phone" placeholder="选填">
+            </div>
+            <button class="btn btn-primary btn-lg btn-block" type="submit">
+                <i class="bi bi-person-plus"></i> 注 册
+            </button>
+        </form>
+
+        <div class="text-center mt-3 small text-soft">
+            已有账号？ <a th:href="@{/login}">立即登录</a>
         </div>
     </div>
+</main>
 
-    <!-- 页脚 -->
-    <div th:replace="fragments :: footer"></div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script th:src="@{/js/main.js}"></script>
+<div th:replace="fragments :: footer"></div>
 </body>
 </html>

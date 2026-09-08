@@ -44,4 +44,11 @@ public class WeatherFavoriteServiceImpl extends ServiceImpl<WeatherFavoriteMappe
             .eq(WeatherFavorite::getUserId, userId)
             .eq(WeatherFavorite::getCityCode, cityCode)) > 0;
     }
+
+    @Override
+    public boolean removeByCityCode(Long userId, String cityCode) {
+        return remove(new LambdaQueryWrapper<WeatherFavorite>()
+            .eq(WeatherFavorite::getUserId, userId)
+            .eq(WeatherFavorite::getCityCode, cityCode));
+    }
 }

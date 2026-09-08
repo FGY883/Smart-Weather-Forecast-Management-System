@@ -9,4 +9,5 @@ public interface WeatherFavoriteService extends IService<WeatherFavorite> {
     boolean addFavorite(Long userId, String city, String cityCode);
     boolean removeFavorite(Long userId, Long favoriteId);
     boolean isFavorited(Long userId, String cityCode);
+    boolean removeByCityCode(Long userId, String cityCode);
 }

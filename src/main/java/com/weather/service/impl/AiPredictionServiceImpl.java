@@ -9,6 +9,7 @@ import com.weather.service.AiPredictionService;
 import com.weather.service.WeatherDataService;
 import com.weather.util.AiPredictionUtil;
 import com.weather.util.WeatherApiUtil;
+import com.weather.util.WeatherCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,6 +40,12 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
     @Autowired
     private WeatherApiUtil weatherApiUtil;
 
+    @Autowired
+    private WeatherCache cache;
+
+    /** 同一城市当天只生成一次预测，避免每次访问都触发 30 次历史天气接口 */
+    private static final Duration PREDICTION_TTL = Duration.ofHours(6);
+
     @Value("${ai.prediction.history-days:7}")
     private int historyDays;
 
@@ -46,8 +54,16 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
 
     @Override
     public List<AiPrediction> generatePrediction(String cityCode, String cityName) {
-        // 删除该城市今天的旧预测数据
         LocalDate today = LocalDate.now();
+        String cacheKey = "ai:" + cityCode + ":" + today;
+
+        // 当天已经算过就直接复用，历史天气接口按天查询，重复生成代价很高
+        List<AiPrediction> cached = cache.get(cacheKey, List.class);
+        if (cached != null && !cached.isEmpty()) {
+            return cached;
+        }
+
+        // 删除该城市今天的旧预测数据
         remove(new LambdaQueryWrapper<AiPrediction>()
             .eq(AiPrediction::getCityCode, cityCode)
             .eq(AiPrediction::getPredictDate, today));
@@ -74,7 +90,7 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
                         }
                     }
                     if (!toSave.isEmpty()) {
-                        weatherDataService.saveBatch(toSave);
+                        weatherDataService.saveOrUpdateData(toSave);
                     }
                     log.info("历史接口补齐{}天数据", toSave.size());
                 }
@@ -90,7 +106,7 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
             log.info("历史数据不足，从和风天气API获取7天预报数据作为参考...");
             List<WeatherData> forecastData = weatherApiUtil.getForecast7Day(cityCode, cityName);
             if (forecastData != null && !forecastData.isEmpty()) {
-                weatherDataService.saveBatch(forecastData);
+                weatherDataService.saveOrUpdateData(forecastData);
                 historyData = new ArrayList<>(aggregateByDay(forecastData).values());
             }
         }
@@ -100,7 +116,6 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
             log.warn("历史数据不足，使用默认预测");
             return generateDefaultPrediction(cityCode, cityName);
         }
-
         // 使用AI算法进行预测
         List<BigDecimal> tempMaxPred = aiPredictionUtil.predictTempMax(historyData, forecastDays);
         List<BigDecimal> tempMinPred = aiPredictionUtil.predictTempMin(historyData, forecastDays);
@@ -142,6 +157,7 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
         }
 
         saveBatch(predictions);
+        cache.put(cacheKey, predictions, PREDICTION_TTL);
         return predictions;
     }
 

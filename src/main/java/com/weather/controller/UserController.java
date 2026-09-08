@@ -2,9 +2,8 @@ package com.weather.controller;
 
 import com.weather.entity.SysUser;
 import com.weather.service.SysUserService;
+import com.weather.util.UserContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +14,9 @@ public class UserController {
 
     @Autowired
     private SysUserService userService;
+
+    @Autowired
+    private UserContext userContext;
 
     @GetMapping("/login")
     public String loginPage(@RequestParam(required = false) String error,
@@ -39,18 +41,31 @@ public class UserController {
                              @RequestParam(required = false) String email,
                              @RequestParam(required = false) String phone,
                              Model model) {
-        if (username == null || username.trim().isEmpty()) {
-            model.addAttribute("errorMsg", "用户名不能为空");
+        if (username == null || username.trim().length() < 3 || username.trim().length() > 30) {
+            model.addAttribute("errorMsg", "用户名长度需在 3-30 位之间");
+            return "register";
+        }
+        if (!username.matches("^[A-Za-z0-9_\\u4e00-\\u9fa5]+$")) {
+            model.addAttribute("errorMsg", "用户名仅支持中英文、数字和下划线");
             return "register";
         }
         if (password == null || password.length() < 6) {
-            model.addAttribute("errorMsg", "密码长度不能少于6位");
+            model.addAttribute("errorMsg", "密码长度不能少于 6 位");
             return "register";
         }
+        if (email != null && !email.trim().isEmpty() && !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+            model.addAttribute("errorMsg", "邮箱格式不正确");
+            return "register";
+        }
+        if (phone != null && !phone.trim().isEmpty() && !phone.matches("^1[3-9]\\d{9}$")) {
+            model.addAttribute("errorMsg", "手机号格式不正确");
+            return "register";
+        }
+
         SysUser user = new SysUser();
         user.setUsername(username.trim());
         user.setPassword(password);
-        user.setNickname(nickname != null ? nickname.trim() : username.trim());
+        user.setNickname(nickname != null && !nickname.trim().isEmpty() ? nickname.trim() : username.trim());
         user.setEmail(email != null ? email.trim() : "");
         user.setPhone(phone != null ? phone.trim() : "");
         if (userService.register(user)) {
@@ -63,7 +78,7 @@ public class UserController {
 
     @GetMapping("/user/profile")
     public String profilePage(Model model) {
-        SysUser user = getCurrentUser();
+        SysUser user = userContext.currentUser();
         if (user == null) return "redirect:/login";
         model.addAttribute("user", user);
         return "profile";
@@ -77,8 +92,16 @@ public class UserController {
                                 @RequestParam(required = false) String cityCode,
                                 @RequestParam(required = false) Boolean pushEnabled,
                                 RedirectAttributes redirectAttributes) {
-        SysUser user = getCurrentUser();
+        SysUser user = userContext.currentUser();
         if (user == null) return "redirect:/login";
+        if (email != null && !email.trim().isEmpty() && !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+            redirectAttributes.addFlashAttribute("errorMsg", "邮箱格式不正确");
+            return "redirect:/user/profile";
+        }
+        if (phone != null && !phone.trim().isEmpty() && !phone.matches("^1[3-9]\\d{9}$")) {
+            redirectAttributes.addFlashAttribute("errorMsg", "手机号格式不正确");
+            return "redirect:/user/profile";
+        }
         user.setNickname(nickname);
         user.setEmail(email);
         user.setPhone(phone);
@@ -86,7 +109,7 @@ public class UserController {
         if (cityCode != null && !cityCode.isEmpty()) user.setCityCode(cityCode);
         if (pushEnabled != null) user.setPushEnabled(pushEnabled);
         userService.updateUser(user);
-        redirectAttributes.addFlashAttribute("successMsg", "个人信息更新成功");
+        redirectAttributes.addFlashAttribute("successMsg", "个人信息已更新");
         return "redirect:/user/profile";
     }
 
@@ -95,14 +118,14 @@ public class UserController {
                                  @RequestParam String newPassword,
                                  @RequestParam String confirmPassword,
                                  RedirectAttributes redirectAttributes) {
-        SysUser user = getCurrentUser();
+        SysUser user = userContext.currentUser();
         if (user == null) return "redirect:/login";
         if (!newPassword.equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("errorMsg", "两次输入的密码不一致");
             return "redirect:/user/profile";
         }
         if (newPassword.length() < 6) {
-            redirectAttributes.addFlashAttribute("errorMsg", "新密码长度不能少于6位");
+            redirectAttributes.addFlashAttribute("errorMsg", "新密码长度不能少于 6 位");
             return "redirect:/user/profile";
         }
         if (userService.changePassword(user.getId(), oldPassword, newPassword)) {
@@ -111,13 +134,5 @@ public class UserController {
             redirectAttributes.addFlashAttribute("errorMsg", "原密码错误");
         }
         return "redirect:/user/profile";
-    }
-
-    private SysUser getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
-            return null;
-        }
-        return userService.findByUsername(auth.getName());
     }
 }

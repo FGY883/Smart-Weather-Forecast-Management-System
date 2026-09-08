@@ -37,8 +37,14 @@ public class PushRecordServiceImpl extends ServiceImpl<PushRecordMapper, PushRec
 
     @Override
     public List<PushRecord> getUserPushRecords(Long userId) {
+        return getUserPushRecords(userId, 50);
+    }
+
+    @Override
+    public List<PushRecord> getUserPushRecords(Long userId, int limit) {
         return list(new LambdaQueryWrapper<PushRecord>()
             .eq(PushRecord::getUserId, userId)
-            .orderByDesc(PushRecord::getCreateTime));
+            .orderByDesc(PushRecord::getCreateTime)
+            .last(Math.max(0, limit) > 0 ? "LIMIT " + limit : ""));
     }
 }
