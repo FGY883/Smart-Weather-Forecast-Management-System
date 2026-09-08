@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${status != null ? status + ' - ' : ''}出错了 - 智能天气预报系统</title>
+    <title th:text="${(status != null ? status + ' - ' : '') + '出错了 - 智能天气预报系统'}">500 - 出错了 - 智能天气预报系统</title>
     <link th:href="@{/css/style.css}" rel="stylesheet">
 </head>
 <body class="bg-light">

@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" data-page-node-id="dsHBRqYdZdtvS5dgzPhc5b">
+<head data-page-node-id="ATAaPaiVWExk9IEhYHPGIE">
+    <meta charset="UTF-8" data-page-node-id="21tTeh2ElztbeSWoEXkDN8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="DzaXdcuNbA8oWipMQF6CHu">
     <title>天气预警 - 智能天气预报系统</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link th:href="@{/css/style.css}" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" data-page-node-id="1vC4sCLnPKbPoz3Cwy20Tt">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet" data-page-node-id="tpDPBmFqBdK3JeZjNH5BE1">
+    <link th:href="@{/css/style.css}" rel="stylesheet" data-page-node-id="FAB7ydAuOd2ACnuUf6MvQh">
     <style>
         /* 预警页专用：等级色带、JSON 数据视图紧凑展示 */
         .warn-strip { height: 4px; }
@@ -56,193 +56,193 @@
         }
     </style>
 </head>
-<body class="bg-light">
+<body class="bg-light" data-page-node-id="KAC3mAdV2OufHA8KpUi4rM">
 
     <!-- 导航栏 -->
-    <div th:replace="fragments :: navbar"></div>
+    <div th:replace="fragments :: navbar" data-page-node-id="LFUVUyKQwVHtkK0xKIOVTo"></div>
 
-    <main class="container mt-4">
+    <main class="container mt-4" data-page-node-id="vNXPfnasHsWP2BuI0LXif9">
 
         <!-- 页头 -->
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-            <div>
-                <h3 class="mb-1">
-                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>天气预警
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2" data-page-node-id="N3updytiepBWiGYi2giQEe">
+            <div data-page-node-id="UCgJcRxFzFsZXpIV2r6gx5">
+                <h3 class="mb-1" data-page-node-id="wSC3T60j7FQp4LqkYFGlFq">
+                    <i class="bi bi-exclamation-triangle text-warning me-2" data-page-node-id="C6cYAUBE2QkEhB2jcXsPlg"></i>天气预警
                 </h3>
-                <div class="text-muted small">
+                <div class="text-muted small" data-page-node-id="1pU98zag6KXdjZkGhopLBr">
                     数据来源
-                    <span class="api-tag">和风天气 /v7/warning</span>
-                    <span class="ms-2 text-muted" th:if="${updateTime != null}">更新时间: <span th:text="${updateTime}">--</span></span>
+                    <span class="api-tag" data-page-node-id="vALeJmo05d3DoYBHd2Z2BR">和风天气 /v7/warning</span>
+                    <span class="ms-2 text-muted" th:if="${updateTime != null}" data-page-node-id="li5ODQ6aFzYaaI7OpgNJSE">更新时间: <span th:text="${updateTime}" data-page-node-id="UjYZH1gCThcl6tjWRG1vqP">--</span></span>
                 </div>
             </div>
-            <div class="d-flex align-items-center gap-2">
-                <a th:href="@{/}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-1"></i>返回首页
+            <div class="d-flex align-items-center gap-2" data-page-node-id="6p8IPYJwZ1mq4GFrFUJsXT">
+                <a th:href="@{/}" class="btn btn-sm btn-outline-secondary" data-page-node-id="agl4Fftn4Sg58zydMdO4iY">
+                    <i class="bi bi-arrow-left me-1" data-page-node-id="u2TMrbAniBEuIeJkmMKoGF"></i>返回首页
                 </a>
             </div>
         </div>
 
         <!-- 搜索 -->
-        <form th:action="@{/weather/warning/search}" method="get" class="mb-4">
-            <div class="input-group">
-                <span class="input-group-text bg-white">
-                    <i class="bi bi-search text-muted"></i>
+        <form th:action="@{/weather/warning/search}" method="get" class="mb-4" data-page-node-id="3NZrt4SGgGmSb7H2kHlfEF">
+            <div class="input-group" data-page-node-id="2Q1ApZevmaAqeAXyGjp2VF">
+                <span class="input-group-text bg-white" data-page-node-id="Phrb8U3IVIG0BDKssZ2bR8">
+                    <i class="bi bi-search text-muted" data-page-node-id="vKsePp5NY0aRYWEikZvBuS"></i>
                 </span>
                 <input type="text" class="form-control" name="city"
                        placeholder="输入城市（如 北京 / 上海 / 深圳）"
-                       th:value="${searchCity}" required>
-                <button class="btn btn-warning" type="submit">
-                    <i class="bi bi-exclamation-triangle me-1"></i>查询预警
+                       th:value="${searchCity}" required data-page-node-id="XvrPltXxjD81nCC6U1OEaa">
+                <button class="btn btn-warning" type="submit" data-page-node-id="mhrGZlLr19oJsmtc0LByZv">
+                    <i class="bi bi-exclamation-triangle me-1" data-page-node-id="A1otek0HFOJpWRN419VXRf"></i>查询预警
                 </button>
                 <a th:if="${searchCity != null}" th:href="@{/weather/warning}"
-                   class="btn btn-outline-secondary">
-                    <i class="bi bi-list me-1"></i>回到全国
+                   class="btn btn-outline-secondary" data-page-node-id="9AofpjwZ7agfJjiSrbR4cl">
+                    <i class="bi bi-list me-1" data-page-node-id="Xw4Hl44PYuwNiPdK4bEPRx"></i>回到全国
                 </a>
             </div>
         </form>
 
         <!-- 错误提示 -->
-        <div th:if="${searchError}" class="alert alert-warning d-flex align-items-center mb-3" role="alert">
-            <i class="bi bi-exclamation-triangle me-2"></i>
-            <span th:text="${searchError}">未找到城市</span>
+        <div th:if="${searchError}" class="alert alert-warning d-flex align-items-center mb-3" role="alert" data-page-node-id="D7lQXw64HjOPpMi7s21a4R">
+            <i class="bi bi-exclamation-triangle me-2" data-page-node-id="wG7WtfDOLEjXVpPxIx437q"></i>
+            <span th:text="${searchError}" data-page-node-id="OvtC4WJtkrB9zGWUfVItHL">未找到城市</span>
         </div>
 
         <!-- ============ 默认页：全国有预警的城市列表 ============ -->
-        <div th:if="${searchCity == null}" th:with="list=${cityList != null ? cityList : '{}'}">
-            <div class="row g-3 mb-3">
-                <div class="col-6 col-md-6">
-                    <div class="stat-card">
-                        <div class="label">有预警的城市数</div>
-                        <div class="value" th:text="${list.size()}">0</div>
+        <div th:if="${searchCity == null}" th:with="list=${cityList != null ? cityList : '{}'}" data-page-node-id="AAA9I5s56CpD8c15IHB29m">
+            <div class="row g-3 mb-3" data-page-node-id="waD7uvOnsU71S2vAMTMEdZ">
+                <div class="col-6 col-md-6" data-page-node-id="OVc6w5qudLKJJ8GcRBE2mJ">
+                    <div class="stat-card" data-page-node-id="XCRHHG8ruaSIoessBgacjS">
+                        <div class="label" data-page-node-id="W23XArlMLzsuu5ubURDDvD">有预警的城市数</div>
+                        <div class="value" th:text="${list.size()}" data-page-node-id="fmA61lgMV5x80IWeoT2GpW">0</div>
                     </div>
                 </div>
-                <div class="col-6 col-md-6">
-                    <div class="stat-card">
-                        <div class="label">累计生效预警条数</div>
+                <div class="col-6 col-md-6" data-page-node-id="qbhV7pyAAS8UKoYONGtfaJ">
+                    <div class="stat-card" data-page-node-id="t5OfCUtXWCAHPWjghxvyh5">
+                        <div class="label" data-page-node-id="F2EskEE9gULuj3pysQ0aNU">累计生效预警条数</div>
                         <div class="value"
-                             th:text="${list.stream().mapToInt(c -> c['warningCount'] != null ? c['warningCount'] : 0).sum()}">0</div>
+                             th:text="${list.stream().mapToInt(c - data-page-node-id="MnFPJkmk56eD5kTZ3E0UF4"> c['warningCount'] != null ? c['warningCount'] : 0).sum()}">0</div>
                     </div>
                 </div>
             </div>
 
             <!-- 城市列表 -->
-            <h5 class="mb-3">
-                <i class="bi bi-geo-alt me-1"></i>当前正在发布预警的城市
-                <span class="text-muted small ms-2">（点击查看该城市预警详情）</span>
+            <h5 class="mb-3" data-page-node-id="73RzOiLkQDkKSjpLlPvSDq">
+                <i class="bi bi-geo-alt me-1" data-page-node-id="sDunHQXQ0ZaZlUleddMOCY"></i>当前正在发布预警的城市
+                <span class="text-muted small ms-2" data-page-node-id="c1zmkNkWvXABEv0nZ0PS4q">（点击查看该城市预警详情）</span>
             </h5>
-            <div th:if="${list != null and !list.isEmpty()}" class="row g-2">
-                <div th:each="row : ${list}" class="col-12 col-md-6 col-lg-4">
+            <div th:if="${list != null and !list.isEmpty()}" class="row g-2" data-page-node-id="DpdjRnZRWtqdLiANSb2uQT">
+                <div th:each="row : ${list}" class="col-12 col-md-6 col-lg-4" data-page-node-id="6Tk441sLayeVWlNT239iOl">
                     <a th:href="@{/weather/warning/search(city=${row['cityName']})}"
-                       class="city-row text-decoration-none">
-                        <div class="d-flex flex-column">
-                            <span class="city-name">
-                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>
-                                <span th:text="${row['cityName']}">北京</span>
+                       class="city-row text-decoration-none" data-page-node-id="hqqKrWKCDMRvxJazWA7kj1">
+                        <div class="d-flex flex-column" data-page-node-id="xdpv2VVp7uY8N2YoQpTuPU">
+                            <span class="city-name" data-page-node-id="RbLJy2seRdlEMBT7esm9Ln">
+                                <i class="bi bi-geo-alt-fill text-danger me-1" data-page-node-id="DW77GM0dHa2LwfCY5hsndc"></i>
+                                <span th:text="${row['cityName']}" data-page-node-id="QxP4cJAx8INaGvGD8GbGN1">北京</span>
                             </span>
-                            <small class="text-muted" th:if="${row['country'] != null and row['province'] != null}">
-                                <span th:text="${row['province']}">北京</span> · <span th:text="${row['country']}">中国</span>
+                            <small class="text-muted" th:if="${row['country'] != null and row['province'] != null}" data-page-node-id="RHFA4ctpEYE2J5iUZcVXz1">
+                                <span th:text="${row['province']}" data-page-node-id="RuBlMA7MsNMo1jeR1vs7Yy">北京</span> · <span th:text="${row['country']}" data-page-node-id="kF6UxLpUunSK2TmvcDKGLy">中国</span>
                             </small>
                         </div>
-                        <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2" data-page-node-id="4ILZGWBQTp9N3WHgHPiYjH">
                             <span class="count-pill"
-                                  th:text="${row['warningCount'] != null ? row['warningCount'] + ' 条' : '- 条'}">0 条</span>
-                            <i class="bi bi-chevron-right text-muted"></i>
+                                  th:text="${row['warningCount'] != null ? row['warningCount'] + ' 条' : '- 条'}" data-page-node-id="QIvG1IQ9dLTTdoxcpywaVs">0 条</span>
+                            <i class="bi bi-chevron-right text-muted" data-page-node-id="byxMPAKzp61gBNwRzH8kWA"></i>
                         </div>
                     </a>
                 </div>
             </div>
-            <div th:if="${list == null or list.isEmpty()}" class="empty-state">
-                <i class="bi bi-shield-check" style="font-size:3rem;color:#2f855a;"></i>
-                <h5 class="mt-3 mb-1" style="color:#2f855a;">当前全国无活跃预警</h5>
-                <p class="text-muted mb-0">各地天气状况良好。如需查询具体城市，请使用上方搜索框。</p>
+            <div th:if="${list == null or list.isEmpty()}" class="empty-state" data-page-node-id="XZ6blUnQBdNV9jk8i0B3ca">
+                <i class="bi bi-shield-check" style="font-size:3rem;color:#2f855a;" data-page-node-id="zxzLgD3xzuMPOJCuzDACRh"></i>
+                <h5 class="mt-3 mb-1" style="color:#2f855a;" data-page-node-id="7ls8uAxQNL6yNZ9xuM3UwP">当前全国无活跃预警</h5>
+                <p class="text-muted mb-0" data-page-node-id="Ehu3UnLQwxpXnbAsCYS1L4">各地天气状况良好。如需查询具体城市，请使用上方搜索框。</p>
             </div>
         </div>
 
         <!-- ============ 搜索结果：城市级预警详情 ============ -->
-        <div th:if="${searchCity != null}">
+        <div th:if="${searchCity != null}" data-page-node-id="aimGmQENgfVd24Z5AtBt8C">
             <!-- 顶部状态条 -->
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <h5 class="mb-0">
-                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>
-                    <span th:text="${searchCity}">北京</span>
-                    <span class="text-muted ms-2 small">预警详情</span>
+            <div class="d-flex align-items-center justify-content-between mb-3" data-page-node-id="43fBGJM7gN1mGBXD8cSEXN">
+                <h5 class="mb-0" data-page-node-id="Ov0DZG936cc3EeoWAI1MDq">
+                    <i class="bi bi-geo-alt-fill text-danger me-1" data-page-node-id="lHt1BBGpIqE65h6WePWTye"></i>
+                    <span th:text="${searchCity}" data-page-node-id="BHtT2yRVLcyLLZhxaSvYTC">北京</span>
+                    <span class="text-muted ms-2 small" data-page-node-id="G4K7YTklgJFBKa2SdNE25V">预警详情</span>
                 </h5>
-                <div>
-                    <span class="api-tag me-2" th:text="${warnings != null ? warnings.size() + ' 条' : '0 条'}">0 条</span>
-                    <a th:href="@{/weather/warning}" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-arrow-left me-1"></i>返回全国
+                <div data-page-node-id="83TDIDUAAU4Kmnq2j18Cks">
+                    <span class="api-tag me-2" th:text="${warnings != null ? warnings.size() + ' 条' : '0 条'}" data-page-node-id="Jjh4gaBNYtyWOvRnZ88ZH2">0 条</span>
+                    <a th:href="@{/weather/warning}" class="btn btn-sm btn-outline-secondary" data-page-node-id="GU9hDbEn17Wav7OWUWxxRE">
+                        <i class="bi bi-arrow-left me-1" data-page-node-id="mxnicgAl5KPLroVhaF0Az2"></i>返回全国
                     </a>
                 </div>
             </div>
 
             <!-- 详情卡片列表 -->
-            <div th:if="${warnings != null and !warnings.isEmpty()}" class="row g-3">
-                <div th:each="w : ${warnings}" class="col-12">
+            <div th:if="${warnings != null and !warnings.isEmpty()}" class="row g-3" data-page-node-id="DYDMW0zNu6CyFS4H8829dT">
+                <div th:each="w : ${warnings}" class="col-12" data-page-node-id="UZbLdWk8pMU5fuwAf3IBCB">
                     <div class="warn-card"
-                         th:classappend="${'level-' + (w['level'] != null ? w['level'] : 'Yellow')}">
-                        <div class="warn-strip"></div>
-                        <div class="p-3">
+                         th:classappend="${'level-' + (w['level'] != null ? w['level'] : 'Yellow')}" data-page-node-id="wX1dwZBFmIFAHM1Y74BiPy">
+                        <div class="warn-strip" data-page-node-id="9b5aHTdZE19jSfaRP0FCVd"></div>
+                        <div class="p-3" data-page-node-id="esqfIJfjFQg08s5bBmfuY4">
                             <!-- 头部：等级 + 类型 + 标题 -->
-                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2" data-page-node-id="y5gnUBE5cEGlLLwbMvoe8a">
+                                <div class="d-flex align-items-center gap-2 flex-wrap" data-page-node-id="gISUTr3bylkAH8Vb9DzK7T">
                                     <span class="level-badge"
-                                          th:text="${w['level'] != null ? (w['level'] == 'White' ? '白色预警' : w['level'] + '色预警') : '未知'}">蓝色预警</span>
-                                    <span class="badge bg-light text-dark border">
-                                        <i class="bi bi-tag me-1"></i>
-                                        <span th:text="${w['typeName'] != null ? w['typeName'] : (w['type'] != null ? w['type'] : '预警')}">高温</span>
+                                          th:text="${w['level'] != null ? (w['level'] == 'White' ? '白色预警' : w['level'] + '色预警') : '未知'}" data-page-node-id="nuLv3QPAE197ufVKEkIKdW">蓝色预警</span>
+                                    <span class="badge bg-light text-dark border" data-page-node-id="4tdopPzR6FyQXuIImIw3Xh">
+                                        <i class="bi bi-tag me-1" data-page-node-id="dzYrkAZiuNfMElnrf8wEwf"></i>
+                                        <span th:text="${w['typeName'] != null ? w['typeName'] : (w['type'] != null ? w['type'] : '预警')}" data-page-node-id="LgSm44wzdOXTzOGnsOxlfD">高温</span>
                                     </span>
                                     <span class="badge bg-secondary bg-opacity-25 text-dark"
                                           th:if="${w['status'] != null}"
-                                          th:text="${w['status'] == 'Active' ? '生效中' : (w['status'] == 'Cancelled' ? '已解除' : '更新中')}">
+                                          th:text="${w['status'] == 'Active' ? '生效中' : (w['status'] == 'Cancelled' ? '已解除' : '更新中')}" data-page-node-id="ihHEiYfcQzBm7FBLOHMI2m">
                                         生效中
                                     </span>
                                 </div>
                             </div>
                             <!-- 标题 -->
-                            <h5 class="mb-2" th:text="${w['title'] != null ? w['title'] : '气象预警'}">北京市气象台发布高温红色预警</h5>
+                            <h5 class="mb-2" th:text="${w['title'] != null ? w['title'] : '气象预警'}" data-page-node-id="aAAnsDUx0CCm0Ch8AjVGFj">北京市气象台发布高温红色预警</h5>
                             <!-- 正文 -->
                             <div class="warn-text mb-3"
-                                 th:text="${w['text'] != null ? w['text'] : '暂无预警内容'}">
+                                 th:text="${w['text'] != null ? w['text'] : '暂无预警内容'}" data-page-node-id="FFnXqztdlgxB4AWpxrwUDP">
                                 预计未来 24 小时 ...
                             </div>
 
                             <!-- 元数据 -->
-                            <div class="row g-2 mb-2">
-                                <div class="col-12 col-md-6 warn-field" th:if="${w['sender'] != null}">
-                                    <i class="bi bi-megaphone me-1 text-muted"></i>
-                                    <b>发布机构：</b><span th:text="${w['sender']}">气象台</span>
+                            <div class="row g-2 mb-2" data-page-node-id="JucHEoHoga8vzPdsAoU2FC">
+                                <div class="col-12 col-md-6 warn-field" th:if="${w['sender'] != null}" data-page-node-id="zE96XfHDJcVug3kyZxQpb7">
+                                    <i class="bi bi-megaphone me-1 text-muted" data-page-node-id="Td2cluc82QNnsXV4IFx89b"></i>
+                                    <b data-page-node-id="cs0Icpikxqu46ihMih8kYC">发布机构：</b><span th:text="${w['sender']}" data-page-node-id="y0ayX5oXBr6YGoyl1IHDGH">气象台</span>
                                 </div>
-                                <div class="col-12 col-md-6 warn-field" th:if="${w['pubTime'] != null}">
-                                    <i class="bi bi-clock me-1 text-muted"></i>
-                                    <b>发布时间：</b><span th:text="${w['pubTime']}">--</span>
+                                <div class="col-12 col-md-6 warn-field" th:if="${w['pubTime'] != null}" data-page-node-id="DuaNRSeqD1H9lkPSFdP4dL">
+                                    <i class="bi bi-clock me-1 text-muted" data-page-node-id="SM4aY8nsJMA7kkHDAuepGK"></i>
+                                    <b data-page-node-id="rfj5mN4ItEfqUc6n06hUaH">发布时间：</b><span th:text="${w['pubTime']}" data-page-node-id="WYfDGwzyHgrqyT9i6xwYMv">--</span>
                                 </div>
-                                <div class="col-12 col-md-6 warn-field" th:if="${w['startTime'] != null}">
-                                    <i class="bi bi-play me-1 text-muted"></i>
-                                    <b>生效起：</b><span th:text="${w['startTime']}">--</span>
+                                <div class="col-12 col-md-6 warn-field" th:if="${w['startTime'] != null}" data-page-node-id="nttgFizbCSprGWG1NbCR4P">
+                                    <i class="bi bi-play me-1 text-muted" data-page-node-id="mIzbPoZZ0njt49ub7AMokN"></i>
+                                    <b data-page-node-id="Yw7fDuztWlJmJbMOGJYtOk">生效起：</b><span th:text="${w['startTime']}" data-page-node-id="l9sgiqGl12mj4c57IZVUG4">--</span>
                                 </div>
-                                <div class="col-12 col-md-6 warn-field" th:if="${w['endTime'] != null}">
-                                    <i class="bi bi-stop me-1 text-muted"></i>
-                                    <b>生效止：</b><span th:text="${w['endTime']}">--</span>
+                                <div class="col-12 col-md-6 warn-field" th:if="${w['endTime'] != null}" data-page-node-id="i0BQU2foiCd79CvHwcWK6g">
+                                    <i class="bi bi-stop me-1 text-muted" data-page-node-id="9mDgd9w7UVpPih1VTmPQbN"></i>
+                                    <b data-page-node-id="SQ4JyIwF2Ar290Y5lQnPcT">生效止：</b><span th:text="${w['endTime']}" data-page-node-id="9sjSXNGSsNThZpMBJjGRAw">--</span>
                                 </div>
-                                <div class="col-12 col-md-6 warn-field" th:if="${w['urgency'] != null}">
-                                    <b>紧急程度：</b><span th:text="${w['urgency']}">--</span>
+                                <div class="col-12 col-md-6 warn-field" th:if="${w['urgency'] != null}" data-page-node-id="oN0hKbqutmAWWhL95MwDYd">
+                                    <b data-page-node-id="N6XBfLzFL19efyj1R73Jtf">紧急程度：</b><span th:text="${w['urgency']}" data-page-node-id="niXw4TbLLYpHxl429Tfv5h">--</span>
                                 </div>
-                                <div class="col-12 col-md-6 warn-field" th:if="${w['certainty'] != null}">
-                                    <b>确定性：</b><span th:text="${w['certainty']}">--</span>
+                                <div class="col-12 col-md-6 warn-field" th:if="${w['certainty'] != null}" data-page-node-id="7RIpdBNyW4nFwdeZpaUjcv">
+                                    <b data-page-node-id="ANcRepFuEg7cjBJPhFpcuI">确定性：</b><span th:text="${w['certainty']}" data-page-node-id="tWRJSIbTR6wD06gPJRix1P">--</span>
                                 </div>
                             </div>
 
                             <!-- 防御指引 -->
-                            <div th:if="${w['instructions'] != null and !w['instructions'].toString().isEmpty()}" class="warn-field">
-                                <i class="bi bi-info-circle me-1 text-muted"></i>
-                                <b>防御指引：</b>
-                                <div class="ms-3 mt-1" th:text="${w['instructions']}">--</div>
+                            <div th:if="${w['instructions'] != null and !w['instructions'].toString().isEmpty()}" class="warn-field" data-page-node-id="xSIz1aNmGG9896FlxrBrjV">
+                                <i class="bi bi-info-circle me-1 text-muted" data-page-node-id="UfTJ1BrcKPGjFPo3cwRozp"></i>
+                                <b data-page-node-id="jMbZ1C3BSxE5s6WhlZlEpm">防御指引：</b>
+                                <div class="ms-3 mt-1" th:text="${w['instructions']}" data-page-node-id="vHtvUWJB3DxTAt4MVY0x9B">--</div>
                             </div>
 
                             <!-- 完整 JSON（用于调试/作业展示） -->
-                            <details class="warn-details">
-                                <summary>查看原始 API 响应</summary>
-                                <pre th:text="${#strings.toString(w)}">{}</pre>
+                            <details class="warn-details" data-page-node-id="c2lGm0brkN1xc46g5jitjQ">
+                                <summary data-page-node-id="YLULRfO3ObDFzgLZ7aMAlN">查看原始 API 响应</summary>
+                                <pre th:text="${#strings.toString(w)}" data-page-node-id="LtGtgzOWk04gCmBM5lpA1N">{}</pre>
                             </details>
                         </div>
                     </div>
@@ -250,18 +250,18 @@
             </div>
 
             <!-- 空态 -->
-            <div th:if="${warnings == null or warnings.isEmpty()}" class="empty-state">
-                <i class="bi bi-shield-check" style="font-size:3rem;color:#2f855a;"></i>
-                <h5 class="mt-3 mb-1" style="color:#2f855a;">
-                    <span th:text="${searchCity}">北京</span> 当前暂无活跃预警
+            <div th:if="${warnings == null or warnings.isEmpty()}" class="empty-state" data-page-node-id="6Aag22IginQEx4MnS49my4">
+                <i class="bi bi-shield-check" style="font-size:3rem;color:#2f855a;" data-page-node-id="W9dIlNaTdREEy98nJ5A3Lg"></i>
+                <h5 class="mt-3 mb-1" style="color:#2f855a;" data-page-node-id="7huNf99FVzrUNWur8AXIJ9">
+                    <span th:text="${searchCity}" data-page-node-id="uAmSGGTpjy5tNms00FC1AD">北京</span> 当前暂无活跃预警
                 </h5>
-                <p class="text-muted mb-0">该地区天气状况良好，请放心出行。</p>
+                <p class="text-muted mb-0" data-page-node-id="KH9TktaiuSi7l8neL5GOhv">该地区天气状况良好，请放心出行。</p>
             </div>
         </div>
 
     </main>
 
-    <div th:replace="fragments :: footer"></div>
+    <div th:replace="fragments :: footer" data-page-node-id="wzavgkC444j3FkshI8f54Z"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script th:src="@{/js/main.js}"></script>
