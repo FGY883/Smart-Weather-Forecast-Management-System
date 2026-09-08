@@ -206,9 +206,30 @@ public class WeatherController {
     @GetMapping("/weather/warning")
     public String warnings(Model model) {
         JSONArray cityList = weatherWarningService.fetchAllWarningsFromApi();
+        int totalWarnings = sumWarningCounts(cityList);
         model.addAttribute("cityList", cityList != null ? cityList : new JSONArray());
+        model.addAttribute("totalWarnings", totalWarnings);
         model.addAttribute("user", userContext.currentUser());
         return "warnings";
+    }
+
+    /**
+     * 把 JSONArray 里的 warningCount 累加。Ognl 在 Thymeleaf 里调
+     * stream() 有兼容性风险，这里提前算好放模型，模板直接 ${totalWarnings}。
+     */
+    private int sumWarningCounts(JSONArray cityList) {
+        if (cityList == null) return 0;
+        int total = 0;
+        for (int i = 0; i < cityList.size(); i++) {
+            Object row = cityList.get(i);
+            if (row instanceof JSONObject) {
+                Object cnt = ((JSONObject) row).get("warningCount");
+                if (cnt instanceof Number) {
+                    total += ((Number) cnt).intValue();
+                }
+            }
+        }
+        return total;
     }
 
     /**

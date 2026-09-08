@@ -1,204 +1,204 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" data-page-node-id="B53iHZGikceCNJ2f10kbFs">
-<head data-page-node-id="JsfGR2gCSNjkk6IdAZh6Wa">
-    <meta charset="UTF-8" data-page-node-id="bqXHMfqTIah1gkJtTq1w1p">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="rahKUBt6AomBFpThi3nDFu">
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>首页 - 智能天气预报系统</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" data-page-node-id="6hO2FZvO50WCXj0geJZCHv">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet" data-page-node-id="BOxLR4xLjGW9CB70creEvL">
-    <link th:href="@{/css/style.css}" rel="stylesheet" data-page-node-id="qKlbOCSQ0SxMp2NFj1RCqh">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
 </head>
-<body class="bg-light" data-page-node-id="2i1RZRE1kxGI2bs63XQVeM">
+<body class="bg-light">
     <!-- Aether 背景云朵漂移装饰 -->
-    <div class="skydeco" aria-hidden="true" data-page-node-id="gZhQfDOFs39xRV0Zxab0tF">
-        <div class="drift" data-page-node-id="UwoCUmWQRA5Eerjy6SxjD1">☁</div>
-        <div class="drift" data-page-node-id="2ZkBzDJ4O7tSKa3GeYEALH">☁</div>
-        <div class="drift" data-page-node-id="R6FHLg64epTTGMzs6eU08b">☁</div>
+    <div class="skydeco" aria-hidden="true">
+        <div class="drift">☁</div>
+        <div class="drift">☁</div>
+        <div class="drift">☁</div>
     </div>
 
     <!-- 导航栏 -->
-    <div th:replace="fragments :: navbar" data-page-node-id="xQ2PHXAVi87RCKQefZQ0PR"></div>
+    <div th:replace="fragments :: navbar"></div>
 
-    <div class="container mt-4" data-page-node-id="HKFmlrwsysWfZypsIyeCyP">
+    <div class="container mt-4">
         <!-- 搜索栏 -->
-        <div class="row justify-content-center mb-4" data-page-node-id="aiFL02vPNOLxuRiJFEBChT">
-            <div class="col-lg-8" data-page-node-id="9YNvVbbXaXMEakM1x61S4h">
-                <form th:action="@{/weather/search}" method="get" class="input-group input-group-lg shadow-sm rounded-3 overflow-hidden" data-page-node-id="Du3IKqfpXgImYEdAdn2Tx1">
-                    <span class="input-group-text bg-white border-0" data-page-node-id="EWuKHpI2WIxjqfutLz5Bv6">
-                        <i class="bi bi-search text-muted" data-page-node-id="HA07VsRK6KFqLDXDBBiPJv"></i>
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-8">
+                <form th:action="@{/weather/search}" method="get" class="input-group input-group-lg shadow-sm rounded-3 overflow-hidden">
+                    <span class="input-group-text bg-white border-0">
+                        <i class="bi bi-search text-muted"></i>
                     </span>
                     <input type="text" class="form-control border-0 py-3" name="city"
-                           placeholder="搜索城市天气，如：北京、上海、深圳..." required data-page-node-id="DKXwvFyXCZsD3sVo1YPigM">
-                    <button class="btn btn-primary px-4" type="submit" data-page-node-id="FwRRO5SbGTUyZ3v0xvDICt">
-                        <i class="bi bi-search me-1" data-page-node-id="BxIg3t2xhVHA4RHfLBvai0"></i>搜索
+                           placeholder="搜索城市天气，如：北京、上海、深圳..." required>
+                    <button class="btn btn-primary px-4" type="submit">
+                        <i class="bi bi-search me-1"></i>搜索
                     </button>
                 </form>
             </div>
         </div>
 
         <!-- 错误消息 -->
-        <div th:if="${searchError}" class="row justify-content-center mb-3" data-page-node-id="NGvylzGmAUG3zBWFCFd1Wv">
-            <div class="col-lg-8" data-page-node-id="4izFPE7evYDQARRsqqylTf">
-                <div class="alert alert-warning alert-dismissible fade show" role="alert" data-page-node-id="t3oa67DtCeGUDDbuFKzgSd">
-                    <i class="bi bi-exclamation-triangle me-1" data-page-node-id="2mbuybvWFjdZnLwuvPSFOh"></i>
-                    <span th:text="${searchError}" data-page-node-id="8cZDfWwd0fnHqUS5acFr72"></span>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" data-page-node-id="mpimrgE5CIUiojcxVx1MOT"></button>
+        <div th:if="${searchError}" class="row justify-content-center mb-3">
+            <div class="col-lg-8">
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    <span th:text="${searchError}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             </div>
         </div>
-        <div th:if="${weatherError}" class="row justify-content-center mb-3" data-page-node-id="3EiDfkW7uKf2SBsSHz94kY">
-            <div class="col-lg-8" data-page-node-id="xJead2nXo8Hz9SqkgwFYSa">
-                <div class="alert alert-danger alert-dismissible fade show" role="alert" data-page-node-id="XLUzDtNFcZ3C9rzcJmgwdT">
-                    <i class="bi bi-exclamation-circle me-1" data-page-node-id="vUkOnjgJ0chahqykWHTJkb"></i>
-                    <span th:text="${weatherError}" data-page-node-id="cBBfqXTkvz9gAsHArDFd8y"></span>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" data-page-node-id="Iy7nWn3qjZ2CwBy5tGnBgl"></button>
+        <div th:if="${weatherError}" class="row justify-content-center mb-3">
+            <div class="col-lg-8">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-circle me-1"></i>
+                    <span th:text="${weatherError}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             </div>
         </div>
 
         <!-- 预警横幅 -->
-        <div th:if="${warnings != null and !warnings.isEmpty()}" class="row mb-4" data-page-node-id="LV0VpstEcMwjnGpFGeTEzb">
-            <div class="col-12" data-page-node-id="7uQ9PWzXLaBUie3JI1V79Z">
+        <div th:if="${warnings != null and !warnings.isEmpty()}" class="row mb-4">
+            <div class="col-12">
                 <div th:each="warning : ${warnings}" class="alert mb-2 d-flex align-items-center rounded-3 shadow-sm"
                      th:classappend="${warning.warningLevel == 'RED' ? 'alert-danger' : (warning.warningLevel == 'ORANGE' ? 'alert-warning' : (warning.warningLevel == 'YELLOW' ? 'alert-info' : 'alert-primary'))}"
-                     role="alert" data-page-node-id="EGs6CGn9vFZBmBgdAk7i8D">
-                    <i class="bi bi-exclamation-triangle-fill me-2 fs-4" data-page-node-id="YieQnkWS9Yt5gqjCGTGZsg"></i>
-                    <div class="flex-grow-1" data-page-node-id="9FHIMCi6RchhJ2GgCdsOpS">
-                        <strong th:text="${warning.warningTitle}" data-page-node-id="fJbZiB7C6rOrVqcCTURjXA">预警标题</strong>
+                     role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i>
+                    <div class="flex-grow-1">
+                        <strong th:text="${warning.warningTitle}">预警标题</strong>
                         <span class="badge ms-2"
                               th:classappend="${warning.warningLevel == 'RED' ? 'bg-danger' : (warning.warningLevel == 'ORANGE' ? 'bg-warning text-dark' : (warning.warningLevel == 'YELLOW' ? 'bg-info text-dark' : 'bg-primary'))}"
-                              th:text="${warning.warningLevel}" data-page-node-id="2pruLftOwJJGpf9a3QtFxk">等级</span>
-                        <span class="badge bg-secondary ms-1" th:text="${warning.warningType}" data-page-node-id="hzkzVTOcBo0EVF9bBEbdAj">类型</span>
+                              th:text="${warning.warningLevel}">等级</span>
+                        <span class="badge bg-secondary ms-1" th:text="${warning.warningType}">类型</span>
                     </div>
-                    <small class="text-muted ms-3" th:text="${#temporals.format(warning.startTime, 'MM-dd HH:mm')}" data-page-node-id="w1DtLYNiiG9mDYltK6vQLi">时间</small>
+                    <small class="text-muted ms-3" th:text="${#temporals.format(warning.startTime, 'MM-dd HH:mm')}">时间</small>
                 </div>
             </div>
         </div>
 
         <!-- 实时天气卡片 -->
-        <div th:if="${realtime != null}" class="row mb-4" data-page-node-id="DejDfvTHbJp640IsI2MlHX">
-            <div class="col-12" data-page-node-id="HdATE1akJZ2m905xlbaqhe">
-                <div class="card border-0 shadow-lg rounded-4 overflow-hidden" data-page-node-id="1rXhxLU1ZKf14aaeqGPlHw">
-                    <div class="card-body p-0" data-page-node-id="fsNjRz0Y4Xx8pkNXpSKvIF">
-                        <div class="row g-0" data-page-node-id="goPrUC0qjBG4qe7DEhWQrb">
+        <div th:if="${realtime != null}" class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                    <div class="card-body p-0">
+                        <div class="row g-0">
                             <!-- 左侧：温度和天气 -->
-                            <div class="col-md-6 bg-primary text-white p-4 p-md-5" data-page-node-id="UzqPhHoFxCXrO6bIEgld2l">
-                                <div class="d-flex justify-content-between align-items-start" data-page-node-id="UFTx6kZpHxF159BBy8SmNa">
-                                    <div data-page-node-id="3ktTErB7HRTcPDgvL6nzAY">
-                                        <h2 class="mb-1" data-page-node-id="41zAt8GMh8JgsLWjB0XUxK">
-                                            <i class="bi bi-geo-alt me-1" data-page-node-id="MAPLWU4JIW0bAFgrGIFXc6"></i>
-                                            <span th:text="${currentCity}" data-page-node-id="A43VPpeOvlw7xZcA8hiPvY">北京</span>
+                            <div class="col-md-6 bg-primary text-white p-4 p-md-5">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h2 class="mb-1">
+                                            <i class="bi bi-geo-alt me-1"></i>
+                                            <span th:text="${currentCity}">北京</span>
                                         </h2>
-                                        <p class="mb-3 opacity-75" th:text="${#temporals.format(realtime.weatherDate, 'yyyy年MM月dd日')}" data-page-node-id="GBGe6YIhpO5ePMVabS8LSU">2026年01月01日</p>
+                                        <p class="mb-3 opacity-75" th:text="${#temporals.format(realtime.weatherDate, 'yyyy年MM月dd日')}">2026年01月01日</p>
                                     </div>
                                     <!-- 和风天气标识 -->
-                                    <div class="ms-2" data-page-node-id="EjtvB2vnBlzi45E0S0pCIE">
-                                        <span class="badge bg-white bg-opacity-25 text-white rounded-pill px-2 py-1" style="font-size: 0.7rem;" data-page-node-id="d6qQvyskw6eNkkoPb2y2M1">
-                                            <i class="bi bi-cloud me-1" data-page-node-id="wz8YOPZKEShDFrtwHb0vhT"></i>和风天气
+                                    <div class="ms-2">
+                                        <span class="badge bg-white bg-opacity-25 text-white rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+                                            <i class="bi bi-cloud me-1"></i>和风天气
                                         </span>
                                     </div>
                                     <!-- 收藏按钮 -->
-                                    <div th:if="${user != null}" class="ms-3" data-page-node-id="geRSYBrzawNpn7q94KpFhr">
+                                    <div th:if="${user != null}" class="ms-3">
                                         <button th:if="${isFavorited != null and isFavorited}"
                                                 class="btn btn-warning btn-sm rounded-pill" id="favoriteBtn"
                                                 onclick="toggleFavorite(false, this)"
-                                                th:attr="data-city=${currentCity}, data-city-code=${currentCityCode}" data-page-node-id="KFKBvAiuSgeafcX4YCU3gV">
-                                            <i class="bi bi-star-fill me-1" data-page-node-id="mWKpw2wWtpMNp9OsXKyGd5"></i>已收藏
+                                                th:attr="data-city=${currentCity}, data-city-code=${currentCityCode}">
+                                            <i class="bi bi-star-fill me-1"></i>已收藏
                                         </button>
                                         <button th:if="${isFavorited == null or !isFavorited}"
                                                 class="btn btn-outline-light btn-sm rounded-pill" id="favoriteBtn"
                                                 onclick="toggleFavorite(true, this)"
-                                                th:attr="data-city=${currentCity}, data-city-code=${currentCityCode}" data-page-node-id="RVvh8N5mGVdNvCbOHsCQ0p">
-                                            <i class="bi bi-star me-1" data-page-node-id="6UqK9SXFGmCTJK4TuulHek"></i>收藏
+                                                th:attr="data-city=${currentCity}, data-city-code=${currentCityCode}">
+                                            <i class="bi bi-star me-1"></i>收藏
                                         </button>
                                     </div>
                                 </div>
-                                <div class="d-flex align-items-center mb-3" data-page-node-id="GMx3gzAzyzr3qQAYmHHewk">
-                                    <span class="display-1 fw-bold me-3" th:text="${realtime.temp != null ? #numbers.formatDecimal(realtime.temp, 1, 0) + '°' : '--'}" data-page-node-id="ZZ7cOXWdr44YVfgPS5Sy0J">25°</span>
-                                    <div data-page-node-id="SHIsHksTCTcWayToSzLpIW">
-                                        <h4 class="mb-1" th:text="${realtime.weatherText}" data-page-node-id="jpUiWcM8WzAV9bJ3fOPn7u">晴</h4>
-                                        <p class="mb-0 opacity-75" data-page-node-id="X73ySrD9PrfEoqp8ToR1BP">
-                                            体感 <span th:text="${realtime.feelsLike != null ? #numbers.formatDecimal(realtime.feelsLike, 1, 0) + '°' : '--'}" data-page-node-id="DuzyDejcP7LhtvG2muLtWa">25°</span>
+                                <div class="d-flex align-items-center mb-3">
+                                    <span class="display-1 fw-bold me-3" th:text="${realtime.temp != null ? #numbers.formatDecimal(realtime.temp, 1, 0) + '°' : '--'}">25°</span>
+                                    <div>
+                                        <h4 class="mb-1" th:text="${realtime.weatherText}">晴</h4>
+                                        <p class="mb-0 opacity-75">
+                                            体感 <span th:text="${realtime.feelsLike != null ? #numbers.formatDecimal(realtime.feelsLike, 1, 0) + '°' : '--'}">25°</span>
                                         </p>
                                     </div>
                                 </div>
                             </div>
                             <!-- 右侧：详细信息 -->
-                            <div class="col-md-6 p-4 p-md-5" data-page-node-id="KqFfH6UCnmcIkuI9u5H6To">
-                                <h5 class="text-muted mb-3" data-page-node-id="LDuJDc71zJwj0MfdJo42Dk">天气详情</h5>
-                                <div class="row g-3" data-page-node-id="3MZf0LNYQaRQ0xX1v9XYmf">
-                                    <div class="col-6" data-page-node-id="qYEe5c5cjOrh4H4nelKxDU">
-                                        <div class="d-flex align-items-center" data-page-node-id="3IC0s3LnG3fH41A99glbb8">
-                                            <i class="bi bi-droplet-fill text-primary me-2 fs-5" data-page-node-id="QwuQduQ30GHUN9JM9SBODp"></i>
-                                            <div data-page-node-id="cVnEhoNdCaHE9ccJJXVLCs">
-                                                <small class="text-muted d-block" data-page-node-id="wMm3v8q9KyGofulhZ5Fk4N">湿度</small>
-                                                <strong th:text="${realtime.humidity != null ? realtime.humidity + '%' : '--'}" data-page-node-id="HyyO7d3YWbFxl6EtBXnWDm">60%</strong>
+                            <div class="col-md-6 p-4 p-md-5">
+                                <h5 class="text-muted mb-3">天气详情</h5>
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-droplet-fill text-primary me-2 fs-5"></i>
+                                            <div>
+                                                <small class="text-muted d-block">湿度</small>
+                                                <strong th:text="${realtime.humidity != null ? realtime.humidity + '%' : '--'}">60%</strong>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-6" data-page-node-id="pX83dFFRYutF9UNstDbDjw">
-                                        <div class="d-flex align-items-center" data-page-node-id="608cdzQiTsAI1MoPRTsf77">
-                                            <i class="bi bi-wind text-primary me-2 fs-5" data-page-node-id="EtMLw4Xqa0edAQ5q97rH03"></i>
-                                            <div data-page-node-id="4RtFfiV0sK3tY8MjBDqrfw">
-                                                <small class="text-muted d-block" data-page-node-id="i7HClgExTHoHT8gKfhTAqy">风向风速</small>
-                                                <strong data-page-node-id="41nT2hDt7HLC1jeqkRXkNj">
-                                                    <span th:text="${realtime.windDir}" data-page-node-id="7yS3X7MsAbdS1zjFWzc98W">北风</span>
-                                                    <span th:text="${realtime.windSpeed != null ? #numbers.formatDecimal(realtime.windSpeed, 1, 1) + 'km/h' : ''}" data-page-node-id="XgGrnz8JjvN5xZk1l5oGeY">10km/h</span>
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-wind text-primary me-2 fs-5"></i>
+                                            <div>
+                                                <small class="text-muted d-block">风向风速</small>
+                                                <strong>
+                                                    <span th:text="${realtime.windDir}">北风</span>
+                                                    <span th:text="${realtime.windSpeed != null ? #numbers.formatDecimal(realtime.windSpeed, 1, 1) + 'km/h' : ''}">10km/h</span>
                                                 </strong>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-6" data-page-node-id="aDdLjzsngL4xaq9Q42XicY">
-                                        <div class="d-flex align-items-center" data-page-node-id="0fWW8ETaCGpV08mJgrhBnT">
-                                            <i class="bi bi-speedometer text-primary me-2 fs-5" data-page-node-id="wg49r4tHi72wFOI2CLGfEb"></i>
-                                            <div data-page-node-id="UWV86UBwWaX3Nm1UDSnZJX">
-                                                <small class="text-muted d-block" data-page-node-id="ktKV5CNDrIDR0Jtsw3mIBN">气压</small>
-                                                <strong th:text="${realtime.pressure != null ? realtime.pressure + 'hPa' : '--'}" data-page-node-id="ADXW8UMZgeWJGRxWlNItNB">1013hPa</strong>
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-speedometer text-primary me-2 fs-5"></i>
+                                            <div>
+                                                <small class="text-muted d-block">气压</small>
+                                                <strong th:text="${realtime.pressure != null ? realtime.pressure + 'hPa' : '--'}">1013hPa</strong>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-6" data-page-node-id="A9etFioGEVGtAHcQ3PU971">
-                                        <div class="d-flex align-items-center" data-page-node-id="slj6sQTSkNG9nyyy11jkOT">
-                                            <i class="bi bi-eye-fill text-primary me-2 fs-5" data-page-node-id="fPXVMxmR2vc9qo9m0pwh88"></i>
-                                            <div data-page-node-id="Z4a2tQ6SVvInX9wW7OcXWt">
-                                                <small class="text-muted d-block" data-page-node-id="jrPPkyCnS2UPsstcjKN2DW">能见度</small>
-                                                <strong th:text="${realtime.visibility != null ? #numbers.formatDecimal(realtime.visibility, 1, 1) + 'km' : '--'}" data-page-node-id="y8uC7PaXgf4zBNaxYb44eI">10km</strong>
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-eye-fill text-primary me-2 fs-5"></i>
+                                            <div>
+                                                <small class="text-muted d-block">能见度</small>
+                                                <strong th:text="${realtime.visibility != null ? #numbers.formatDecimal(realtime.visibility, 1, 1) + 'km' : '--'}">10km</strong>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-6" data-page-node-id="YKqg018DyGJlBxqnEzEeLM">
-                                        <div class="d-flex align-items-center" data-page-node-id="N3mN9fjorqzTYXizI9Miui">
-                                            <i class="bi bi-thermometer-high text-danger me-2 fs-5" data-page-node-id="TDoTbw3VuCzW8dIBMhOLvX"></i>
-                                            <div data-page-node-id="LHikbPndEMRM3qQ3X5XH4k">
-                                                <small class="text-muted d-block" data-page-node-id="8AcH3H9jn01Ha3JHvY7YcE">最高温度</small>
-                                                <strong th:text="${realtime.tempMax != null ? #numbers.formatDecimal(realtime.tempMax, 1, 0) + '°' : '--'}" data-page-node-id="GEjYtk4XfMz9NZIFCrPev5">30°</strong>
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-thermometer-high text-danger me-2 fs-5"></i>
+                                            <div>
+                                                <small class="text-muted d-block">最高温度</small>
+                                                <strong th:text="${realtime.tempMax != null ? #numbers.formatDecimal(realtime.tempMax, 1, 0) + '°' : '--'}">30°</strong>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-6" data-page-node-id="uvfXrnRuu4UvqgbE97tzGU">
-                                        <div class="d-flex align-items-center" data-page-node-id="MQFXRTduZxFmJ7mmhbEiVw">
-                                            <i class="bi bi-thermometer-low text-info me-2 fs-5" data-page-node-id="wyLhtnlp5xRQgs7gzpKMtj"></i>
-                                            <div data-page-node-id="4mWZY6aCVxnkAmZnam7ayS">
-                                                <small class="text-muted d-block" data-page-node-id="TTQzizRHRV8CosEcEuviyq">最低温度</small>
-                                                <strong th:text="${realtime.tempMin != null ? #numbers.formatDecimal(realtime.tempMin, 1, 0) + '°' : '--'}" data-page-node-id="K4RCyMAiA7S8qDFGljTe5G">18°</strong>
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-thermometer-low text-info me-2 fs-5"></i>
+                                            <div>
+                                                <small class="text-muted d-block">最低温度</small>
+                                                <strong th:text="${realtime.tempMin != null ? #numbers.formatDecimal(realtime.tempMin, 1, 0) + '°' : '--'}">18°</strong>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-12" data-page-node-id="jBMPl930dzAebT72vDz7zu">
-                                        <div class="d-flex align-items-center" data-page-node-id="9kowiGevJIGkTwFDLJZ4P8">
-                                            <i class="bi bi-cloud-rain-fill text-primary me-2 fs-5" data-page-node-id="B1ywcxCTAb7DWsW6keS4AQ"></i>
-                                            <div data-page-node-id="08melD5WMYXWdclNWRqYtG">
-                                                <small class="text-muted d-block" data-page-node-id="YIEsTgAHGx48A7H1neMS2A">降水量</small>
-                                                <strong th:text="${realtime.precip != null ? #numbers.formatDecimal(realtime.precip, 1, 1) + 'mm' : '0mm'}" data-page-node-id="7pIZYONSBjNstjcZBLj3RL">0mm</strong>
+                                    <div class="col-12">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-cloud-rain-fill text-primary me-2 fs-5"></i>
+                                            <div>
+                                                <small class="text-muted d-block">降水量</small>
+                                                <strong th:text="${realtime.precip != null ? #numbers.formatDecimal(realtime.precip, 1, 1) + 'mm' : '0mm'}">0mm</strong>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="mt-3" data-page-node-id="bEuE64C8RONbpDqo10rn0R">
+                                <div class="mt-3">
                                     <a th:href="@{/weather/detail/{code}(code=${currentCityCode}, cityName=${currentCity})}"
-                                       class="btn btn-outline-primary btn-sm rounded-pill" data-page-node-id="CQdEq0bTLMoJGoZt4tplIm">
-                                        <i class="bi bi-info-circle me-1" data-page-node-id="eCerLwz9JpqzqK1KSuEzyt"></i>查看详情
+                                       class="btn btn-outline-primary btn-sm rounded-pill">
+                                        <i class="bi bi-info-circle me-1"></i>查看详情
                                     </a>
                                 </div>
                             </div>
@@ -209,54 +209,54 @@
         </div>
 
         <!-- 7 天预报均分布局（Aether 紧凑场景） -->
-        <div th:if="${forecast != null and !forecast.isEmpty()}" class="mb-4" data-page-node-id="k48aOoYtDjItIDaME6vj0V">
-            <h4 class="section-title" data-page-node-id="CdCdtAzpsKya7UbQTk1D6Q">
-                <i class="bi bi-calendar-week me-1" data-page-node-id="qbsZLt5hhbA1pkDIPQoMyA"></i>未来 7 天预报
+        <div th:if="${forecast != null and !forecast.isEmpty()}" class="mb-4">
+            <h4 class="section-title">
+                <i class="bi bi-calendar-week me-1"></i>未来 7 天预报
             </h4>
-            <div class="aether-week-grid" data-page-node-id="zTZXP5DdCB5WCBqJkELeOe">
-                <div th:each="day, iter : ${forecast}" class="aether-mini sky-cloudy aether-week-cell" data-page-node-id="WuTCfcV9FIc316kRIsdq82">
+            <div class="aether-week-grid">
+                <div th:each="day, iter : ${forecast}" class="aether-mini sky-cloudy aether-week-cell">
                     <p class="mb-1 date"
-                       th:text="${iter.index == 0 ? '今天' : #temporals.format(day.weatherDate, 'MM/dd')}" data-page-node-id="qSGEaW0361xcF1n9hCFn7N">今天</p>
-                    <p class="mb-0 text" th:text="${day.weatherText}" data-page-node-id="LSoEMS5gG0chYrEOxvk7zA">晴</p>
-                    <div class="temp" data-page-node-id="3r5PPkhphH8pFWfPXcJwld">
-                        <span th:text="${day.tempMax != null ? #numbers.formatDecimal(day.tempMax, 1, 0) + '°' : '--'}" data-page-node-id="TljRgF4zqRwnjKifm1qFvy">28°</span>
+                       th:text="${iter.index == 0 ? '今天' : #temporals.format(day.weatherDate, 'MM/dd')}">今天</p>
+                    <p class="mb-0 text" th:text="${day.weatherText}">晴</p>
+                    <div class="temp">
+                        <span th:text="${day.tempMax != null ? #numbers.formatDecimal(day.tempMax, 1, 0) + '°' : '--'}">28°</span>
                     </div>
-                    <div class="range" data-page-node-id="1Tt0xXipSbEpy0vGURKfMT">
+                    <div class="range">
                         <span class="me-1"
-                              th:text="${day.tempMin != null ? '↓ ' + #numbers.formatDecimal(day.tempMin, 1, 0) + '°' : ''}" data-page-node-id="N1H9MqNYXH2i401ryHZN6H">↓ 15°</span>
+                              th:text="${day.tempMin != null ? '↓ ' + #numbers.formatDecimal(day.tempMin, 1, 0) + '°' : ''}">↓ 15°</span>
                     </div>
                     <small class="d-block mt-1"
-                           th:text="${day.windDir != null ? day.windDir : ''}" data-page-node-id="FguEzuDBrG2e7ILEuOvZNe">北风</small>
+                           th:text="${day.windDir != null ? day.windDir : ''}">北风</small>
                 </div>
             </div>
         </div>
 
         <!-- Aether 城市卡网格（响应式 auto-fill · 7 套场景） -->
-        <div class="mb-4" data-page-node-id="I46oBj0Bs7v0IfwVV9a3Bt">
-            <h2 class="aether-section-title" data-page-node-id="gwUZmXGUYcy6ap65IsRJnk">Skies &amp; Cities</h2>
-            <p class="aether-section-sub" data-page-node-id="BmmGFMiy3svBm6di29NkvC">手绘天空 · 城市天气</p>
-            <p class="aether-section-tag mb-3" data-page-node-id="LvOQt0gYDU3nMnlPnB6hTg">
+        <div class="mb-4">
+            <h2 class="aether-section-title">Skies &amp; Cities</h2>
+            <p class="aether-section-sub">手绘天空 · 城市天气</p>
+            <p class="aether-section-tag mb-3">
                 数据源自和风天气 (QWeather) · 每个城市卡片都对应一套独立动态场景
             </p>
-            <div class="aether-grid" id="cityGrid" data-page-node-id="ELBZ7h0lEA9u7MfAgmxulR"></div>
-            <footer class="text-center mt-4" data-page-node-id="NCr9fQHXSxaYAQJQVIrbL6">
-                <small class="text-muted" data-page-node-id="lSaKSmCocr9iZMh5z0J2ct">
+            <div class="aether-grid" id="cityGrid"></div>
+            <footer class="text-center mt-4">
+                <small class="text-muted">
                     数据每 30 分钟更新一次 · 点击卡片查看完整详情
-                    · <a th:href="@{/weather/aether}" class="text-decoration-none" data-page-node-id="j1jRd01vcISVmi5PyTejPD">展开完整城市库 →</a>
+                    · <a th:href="@{/weather/aether}" class="text-decoration-none">展开完整城市库 →</a>
                 </small>
             </footer>
         </div>
 
         <!-- 无数据提示 -->
-        <div th:if="${realtime == null and weatherError == null and cityCardsJson == null}" class="text-center py-5" data-page-node-id="sAi8D7aOITMKnDyGN3xDXe">
-            <i class="bi bi-cloud-sun text-muted" style="font-size: 4rem;" data-page-node-id="t1q2H9eASJFXm9cPwG97EW"></i>
-            <h4 class="text-muted mt-3" data-page-node-id="v5uCcXVzXraxfD5S5gfkDj">搜索城市查看天气</h4>
-            <p class="text-muted" data-page-node-id="eSyFGyuDFWJFOiJV9ngZf4">在上方搜索框中输入城市名称，即可获取实时天气、7 天预报与城市卡网格</p>
+        <div th:if="${realtime == null and weatherError == null and cityCardsJson == null}" class="text-center py-5">
+            <i class="bi bi-cloud-sun text-muted" style="font-size: 4rem;"></i>
+            <h4 class="text-muted mt-3">搜索城市查看天气</h4>
+            <p class="text-muted">在上方搜索框中输入城市名称，即可获取实时天气、7 天预报与城市卡网格</p>
         </div>
     </div>
 
     <!-- 页脚 -->
-    <div th:replace="fragments :: footer" data-page-node-id="lXphiMJy0WS4VovRRAn7Bh"></div>
+    <div th:replace="fragments :: footer"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script th:src="@{/js/main.js}"></script>

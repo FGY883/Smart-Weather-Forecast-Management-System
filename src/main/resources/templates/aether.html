@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" data-page-node-id="r02LANCOtXbypSGnFzoKMZ">
-<head data-page-node-id="zkd6AjShgbxdzMeE4UFhu8">
-<meta charset="UTF-8" data-page-node-id="dtBXCXdlO3fSsz8MlXY3qz">
-<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="2xibFArY9qv7akurIt94zY">
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aether · Skies &amp; Weather — 智能天气预报系统</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com" data-page-node-id="RkB0clDAGkiYEfUhOMttT8">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin data-page-node-id="q42DvZFKRvPIuFHBcdRltq">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;1,9..144,400;1,9..144,600&family=Quicksand:wght@400;500;600;700&family=Baloo+2:wght@500;600;700;800&family=ZCOOL+KuaiLe&display=swap" data-page-node-id="7o9MWe9StwPNnCNX5tgCfi">
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;1,9..144,400;1,9..144,600&family=Quicksand:wght@400;500;600;700&family=Baloo+2:wght@500;600;700;800&family=ZCOOL+KuaiLe&display=swap">
 
 <style>
 :root{
@@ -348,68 +348,68 @@ footer a:hover{color:var(--ink)}
 </style>
 </head>
 
-<body data-page-node-id="G7mA7wX4nwbHEsXLExW6bf">
-<div class="skydeco" data-page-node-id="NO6SmJc0Yj1ejiz5apvinZ">
-  <svg class="drift" width="150" height="66" viewBox="0 0 160 90" data-page-node-id="0B40haIWZ3Mbi719GF1aP3">
+<body>
+<div class="skydeco">
+  <svg class="drift" width="150" height="66" viewBox="0 0 160 90">
     <path d="M34 76 C16 76 6 64 12 52 C17 33 40 28 50 40 C58 22 84 20 94 34 C112 22 138 32 138 50 C152 52 158 70 142 76 Z"
-          fill="#ffffff" stroke="#a9c0dd" stroke-width="2.4" stroke-linejoin="round" data-page-node-id="bI4DtTK2ef3YZ4YBUvND66"/>
+          fill="#ffffff" stroke="#a9c0dd" stroke-width="2.4" stroke-linejoin="round"/>
   </svg>
-  <svg class="drift" width="112" height="50" viewBox="0 0 160 90" data-page-node-id="FB6VEj5IedxExM8IBmC9BV">
+  <svg class="drift" width="112" height="50" viewBox="0 0 160 90">
     <path d="M34 76 C16 76 6 64 12 52 C17 33 40 28 50 40 C58 22 84 20 94 34 C112 22 138 32 138 50 C152 52 158 70 142 76 Z"
-          fill="#ffffff" stroke="#a9c0dd" stroke-width="2.4" stroke-linejoin="round" data-page-node-id="aVEUkENltjDT5ajgHVxjKT"/>
+          fill="#ffffff" stroke="#a9c0dd" stroke-width="2.4" stroke-linejoin="round"/>
   </svg>
-  <svg class="drift" width="178" height="78" viewBox="0 0 160 90" data-page-node-id="JqqCT8xbWYtHZK07xc1Q9o">
+  <svg class="drift" width="178" height="78" viewBox="0 0 160 90">
     <path d="M34 76 C16 76 6 64 12 52 C17 33 40 28 50 40 C58 22 84 20 94 34 C112 22 138 32 138 50 C152 52 158 70 142 76 Z"
-          fill="#ffffff" stroke="#a9c0dd" stroke-width="2.4" stroke-linejoin="round" data-page-node-id="cfUq1UQe6EA2VtNHWHSGAC"/>
+          fill="#ffffff" stroke="#a9c0dd" stroke-width="2.4" stroke-linejoin="round"/>
   </svg>
 </div>
-<div class="grain" data-page-node-id="2HsdCY5yXOBjVobfEt4XID"></div>
+<div class="grain"></div>
 
-<header class="topbar" data-page-node-id="pH0I4Cb8CxB9F98PU9FBdB">
-  <a th:href="@{/}" data-page-node-id="EkORC8RQbp20lbb4HW0BGw"><span aria-hidden="true" data-page-node-id="zw8U5UlNb1vYOyEjvB5UXp">←</span> 返回系统首页</a>
-  <span class="who" data-page-node-id="iHQLSe0QBT5itE9wqKHyX4">
-    <span th:if="${user != null}" data-page-node-id="2EycV8kKGHGfIhxDmGdc1r">
-      <span class="dot" data-page-node-id="6pOnDE0lUuLnwppSJzhYcv"></span>
-      <span th:text="${user.nickname != null && !user.nickname.isEmpty()} ? ${user.nickname} : ${user.username}" data-page-node-id="SsfOLa9jDrY79AUKe6XGxr">用户</span> · 我的收藏
+<header class="topbar">
+  <a th:href="@{/}"><span aria-hidden="true">←</span> 返回系统首页</a>
+  <span class="who">
+    <span th:if="${user != null}">
+      <span class="dot"></span>
+      <span th:text="${user.nickname != null && !user.nickname.isEmpty()} ? ${user.nickname} : ${user.username}">用户</span> · 我的收藏
     </span>
-    <a th:if="${user == null}" th:href="@{/login}" data-page-node-id="kzSRtoi0x99djo7M0jQQUV">登录后可用收藏城市 · 登录</a>
+    <a th:if="${user == null}" th:href="@{/login}">登录后可用收藏城市 · 登录</a>
   </span>
 </header>
 
-<header class="hero" data-page-node-id="T5lSLuZRrMzH0olmLR3sG4">
-  <h1 class="logo" data-page-node-id="S9jbjA2KQ2TGPnIi3qMNb1">Aether</h1>
-  <svg class="squiggle" viewBox="0 0 280 16" preserveAspectRatio="none" aria-hidden="true" data-page-node-id="lM97GNy5cqSsBJ0sDw0L0R">
-    <path d="M4 11 C40 2, 74 15, 108 8 S180 1, 214 11 S262 6, 276 9" data-page-node-id="FqgkLx9pB1Yx6VPxdswkxu"/>
+<header class="hero">
+  <h1 class="logo">Aether</h1>
+  <svg class="squiggle" viewBox="0 0 280 16" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M4 11 C40 2, 74 15, 108 8 S180 1, 214 11 S262 6, 276 9"/>
   </svg>
-  <p class="sub" data-page-node-id="B7YR3cPzvouvlN21SHwlDF">Skies &amp; Weather</p>
-  <p class="tagline" data-page-node-id="lFizff1ENFFnh8wV33DmNo">手绘天空 · 数据与本项目同源，实时取自和风天气</p>
+  <p class="sub">Skies &amp; Weather</p>
+  <p class="tagline">手绘天空 · 数据与本项目同源，实时取自和风天气</p>
 </header>
 
-<section class="searchbar" data-page-node-id="CCFZXGPWCphqIlICO2fzvH">
-  <div class="searchbox" data-page-node-id="jUOm7gzux9dfTbHnjaZMLg">
+<section class="searchbar">
+  <div class="searchbox">
     <input id="q" type="text" autocomplete="off" spellcheck="false"
-           placeholder="搜索城市 · 北京 / beijing / bj" aria-label="搜索城市" data-page-node-id="uHLAtmlXpmlLhwehDeHYt4">
-    <span class="ico" data-page-node-id="E0paDvtCYHlmFO9wzv3bmH">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#6b7b98" stroke-width="2.4" stroke-linecap="round" data-page-node-id="fEZBS6BOOcTmcc1BoM8W2v">
-        <circle cx="11" cy="11" r="7" data-page-node-id="nQRYlCJFEVJ95BUOzX4B2Y"/><path d="M16.5 16.5 L21 21" data-page-node-id="vIWIbpGWnB0KHcIAmSDj51"/>
+           placeholder="搜索城市 · 北京 / beijing / bj" aria-label="搜索城市">
+    <span class="ico">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#6b7b98" stroke-width="2.4" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 L21 21"/>
       </svg>
     </span>
-    <div class="suggest" id="suggest" role="listbox" aria-label="城市联想" data-page-node-id="cf8lpbXkK7NtKiS2I6pRsH"></div>
+    <div class="suggest" id="suggest" role="listbox" aria-label="城市联想"></div>
   </div>
 </section>
 
-<main class="wrap" data-page-node-id="6fijvEkgJCHa8Ub1IlqD7p">
-  <div class="grid" id="grid" data-page-node-id="RN9OPcSuLCfL1nH26koHy9"></div>
+<main class="wrap">
+  <div class="grid" id="grid"></div>
 </main>
 
-<footer data-page-node-id="mwHEUGTzLcGwwGdbdexpbi">
-  数据源自和风天气 (QWeather) · 智能天气预报系统<br data-page-node-id="GlSCJJTynXqxAU5meCncZ1">
-  <a th:href="@{/weather/warning}" data-page-node-id="mLixBpeQHsfHQSPof3SACO">查看天气预警</a> ·
-  <a th:href="@{/weather/ai-forecast}" data-page-node-id="GUKZSXiRWwXVmQ4qgnyqvi">AI 预测</a> ·
-  <a th:href="@{/weather/statistics/search(city='北京')}" data-page-node-id="ZtCdPDcTwf0n2rnjGoTaiO">数据统计</a>
+<footer>
+  数据源自和风天气 (QWeather) · 智能天气预报系统<br>
+  <a th:href="@{/weather/warning}">查看天气预警</a> ·
+  <a th:href="@{/weather/ai-forecast}">AI 预测</a> ·
+  <a th:href="@{/weather/statistics/search(city='北京')}">数据统计</a>
 </footer>
 
-<div class="toast" id="toast" role="status" aria-live="polite" data-page-node-id="4kCL7sGfdDQrPEDAepNCSG"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script type="application/json" id="aether-initial" th:utext="${cardsJson}">[]</script>
 
