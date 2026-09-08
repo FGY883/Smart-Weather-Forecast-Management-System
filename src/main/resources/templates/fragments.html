@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" data-page-node-id="Xczgui2IGai7Fo3jJk5oUD">
+<head data-page-node-id="XHe76M8NMxTCbKpygf7F8F">
+    <meta charset="UTF-8" data-page-node-id="yg8rZwws6yAr7gIMqVDBL3">
+</head>
+<body data-page-node-id="ZL6EvZVoT1f9A9NmBXrgGp">
+
+<!-- ==================== 导航栏片段 ==================== -->
+<nav th:fragment="navbar" class="navbar navbar-expand-lg shadow-sm" data-page-node-id="3DoXx2YqJruJHGnLbn9cWY">
+    <div class="container" data-page-node-id="XTOwDqciz8hlEpXBAeGIAj">
+        <a class="navbar-brand" th:href="@{/}" data-page-node-id="4f2g1mfVp8F6h9iQSg0OfL">
+            <i class="bi bi-cloud-sun me-2" data-page-node-id="CtyDPRefD0A2fD1su9mYjh"></i>Aether Weather
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation" data-page-node-id="KrKFguNF2GnPqmDiAWkwcS">
+            <span class="navbar-toggler-icon" data-page-node-id="JHaNlAooQMNU0YEmJOU0aG"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav" data-page-node-id="GPSlJOUnO309rwmJye0jt4">
+            <!-- 左侧导航链接 -->
+            <ul class="navbar-nav me-auto" data-page-node-id="2PNbE50WTH7c9wgojDV1FE">
+                <li class="nav-item" data-page-node-id="ErrE2aK9sFYB8JvjaIpIRd">
+                    <a class="nav-link" th:href="@{/}" data-page-node-id="fTSvE60PBpdvm7JNfoa3DZ">
+                        <i class="bi bi-house-door me-1" data-page-node-id="OTzJSbsHPFyicz7LeKrzqj"></i>首页
+                    </a>
+                </li>
+                <li class="nav-item" data-page-node-id="7mdnGL63CQqXDMSFnqE93T">
+                    <a class="nav-link" th:href="@{/weather/warning}" data-page-node-id="PsCESNVrDhAG0ao1gh8m6e">
+                        <i class="bi bi-exclamation-triangle me-1" data-page-node-id="dBcjMRA1nfdncSniqFrTBn"></i>天气预警
+                    </a>
+                </li>
+                <li class="nav-item" data-page-node-id="1qe9B6OFYNxMfMqPf3Wr4I">
+                    <a class="nav-link" sec:authorize="isAuthenticated()" th:href="@{/weather/ai-forecast}" data-page-node-id="dyv9XYGBwnSvFMoM12GfXQ">
+                        <i class="bi bi-graph-up me-1" data-page-node-id="MnKU0qLI97ocFRVMIxBNRf"></i>7天预报
+                    </a>
+                </li>
+                <li class="nav-item" data-page-node-id="3A3rpL0xEADJgH1eBKVQtt">
+                    <a class="nav-link" th:href="@{/weather/statistics/search(city='北京')}" data-page-node-id="QgQqmUhTm5ZWJq1zOWdoxm">
+                        <i class="bi bi-bar-chart me-1" data-page-node-id="Bt986bHevLnuNr4CrTXIPv"></i>数据统计
+                    </a>
+                </li>
+            </ul>
+            <!-- 右侧用户信息 -->
+            <ul class="navbar-nav" data-page-node-id="Sm54HdMsHAGCA9zLhgILCD">
+                <!-- 已登录：个人中心下拉菜单 -->
+                <li class="nav-item dropdown" sec:authorize="isAuthenticated()" data-page-node-id="YNmK0BwCEpdBEQLRDrQzkS">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false" data-page-node-id="OiBA2hD7GgbssPg4h5Jps8">
+                        <i class="bi bi-person-circle me-1" data-page-node-id="kJA0AVs9QG8MZnyPrN8HnZ"></i>
+                        <span sec:authentication="name" data-page-node-id="AWf3weSIFiQrULHlceSNE6">用户名</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm rounded-3" aria-labelledby="userDropdown" data-page-node-id="tSI3KtI6N7ua3nbFgNxcUB">
+                        <li data-page-node-id="22UcPbJlmyUyx8vZYGlBpr">
+                            <a class="dropdown-item" th:href="@{/user/profile}" data-page-node-id="g9tmrjTbBSBYYdE2qSAQtG">
+                                <i class="bi bi-person me-2" data-page-node-id="z31GkdUHwGRekHCP8kHm2j"></i>个人中心
+                            </a>
+                        </li>
+                        <li data-page-node-id="v9HPao08YAnOLFtA3ipDyd"><hr class="dropdown-divider" data-page-node-id="uunRk5tSomiKxhH6Sozf9p"></li>
+                        <li data-page-node-id="SL80tzhJAY1JA27dG4Snmv">
+                            <a class="dropdown-item" th:href="@{/user/profile}" data-page-node-id="zUBKIbVtRECZb2JE4kVr3s">
+                                <i class="bi bi-pencil-square me-2" data-page-node-id="hfyfx7BjZZPRCb7qpnhZPj"></i>个人信息
+                            </a>
+                        </li>
+                        <li data-page-node-id="yVe7DyEHNBcSSbFCpodNnr">
+                            <a class="dropdown-item" th:href="@{/user/profile}" data-page-node-id="cZ9ILjD5XrqNpGABnlFVe7">
+                                <i class="bi bi-star me-2" data-page-node-id="x4gGkh35yElPmfYWL6i5OP"></i>我的收藏
+                            </a>
+                        </li>
+                        <li data-page-node-id="N8ACnSCgAWqJRhUQGXWQ1e">
+                            <a class="dropdown-item" th:href="@{/user/profile}" data-page-node-id="Bgi4NHAZHwqpl5Z6UowbDc">
+                                <i class="bi bi-bell me-2" data-page-node-id="HQN2x73SRAJKOrs2lzBntP"></i>推送记录
+                            </a>
+                        </li>
+                        <li data-page-node-id="Kd7ofFUxjqFSdsNtzONm3y"><hr class="dropdown-divider" data-page-node-id="6uUsgsbrFDfyuaB6MMivih"></li>
+                        <li data-page-node-id="225FBXtsDaG17euGDuQXn6">
+                            <a class="dropdown-item text-danger" th:href="@{/logout}" data-page-node-id="yUs4e90ou5iAcgUpspJQSb">
+                                <i class="bi bi-box-arrow-right me-2" data-page-node-id="TJTFGclOlUERed0a84vUCF"></i>退出登录
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <!-- 未登录 -->
+                <li class="nav-item" sec:authorize="!isAuthenticated()" data-page-node-id="4bwXYtwnwSuY9ptOBhgYpZ">
+                    <a class="nav-link" th:href="@{/login}" data-page-node-id="VUxEQ6Mr61RxFD7gJM9KL6">
+                        <i class="bi bi-box-arrow-in-right me-1" data-page-node-id="bxgP9YrlAjrFRjsxkSRE0E"></i>登录
+                    </a>
+                </li>
+                <li class="nav-item" sec:authorize="!isAuthenticated()" data-page-node-id="Iy8NybdvSOHTuHHBkREpX9">
+                    <a class="nav-link" th:href="@{/register}" data-page-node-id="GnuiEDEn9XKzs2Mifx3yVR">
+                        <i class="bi bi-person-plus me-1" data-page-node-id="EVkvFwhmcBXkcUWYegZi7F"></i>注册
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- ==================== 页脚片段 ==================== -->
+<footer th:fragment="footer" class="bg-light text-muted py-4 mt-5 border-top" data-page-node-id="8BqWq0JneIojkAebGMaLDx">
+    <div class="container" data-page-node-id="s5Xkj5QCWFcVaKYAfXuVou">
+        <div class="row" data-page-node-id="OwfFpuhoTY2HV64T559BNk">
+            <div class="col-md-6" data-page-node-id="vTpTgfeHgiRY3NoXGEvW1V">
+                <p class="mb-1" data-page-node-id="qvZh8J211DXrK1n9knRJ8F">
+                    <i class="bi bi-cloud-sun me-1" data-page-node-id="iUINe9pKhEQZeYdR9BIttI"></i>
+                    <strong data-page-node-id="Ocmjt7o8aWj9wTcTZMwEYb">智能天气预报系统</strong>
+                </p>
+                <p class="mb-0 small" data-page-node-id="Enju9dkgGzqjLt9HCjRU7G">基于 Spring Boot + Thymeleaf + AI 构建的智能天气预报平台</p>
+                <p class="mb-0 small mt-1" data-page-node-id="n46V5UQ1Ftwxhh8eQrgeIU">
+                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill" data-page-node-id="9w7WA4NwybK8GZZHcl3TBe">
+                        <i class="bi bi-cloud me-1" data-page-node-id="YFOZyrzBvozCBSQl1kXkCX"></i>天气数据来源：和风天气 (QWeather)
+                    </span>
+                </p>
+            </div>
+            <div class="col-md-6 text-md-end" data-page-node-id="Ewo6eNGa2BFOKkNy9uggfj">
+                <p class="mb-1" data-page-node-id="ImTVTdzuxIwycKOiY8LjrF">&copy; 2026 智能天气预报系统 版权所有</p>
+                <p class="mb-0 small" data-page-node-id="xXCEBSFVClybGWcQufvzAB">天气数据来源：和风天气 (QWeather) | 预报接口：/v7/weather/7d</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${currentCity != null ? currentCity + ' - 数据统计' : '数据统计'}">数据统计 - 智能天气预报系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <!-- Aether 背景云朵漂移装饰 -->
+    <div class="skydeco" aria-hidden="true">
+        <div class="drift">☁</div>
+        <div class="drift">☁</div>
+        <div class="drift">☁</div>
+    </div>
+
+    <!-- 导航栏 -->
+    <div th:replace="fragments :: navbar"></div>
+
+    <div class="container mt-4">
+        <!-- 页面标题 -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <h3>
+                <i class="bi bi-bar-chart text-primary me-2"></i>天气数据统计
+            </h3>
+            <a th:href="@{/}" class="btn btn-outline-secondary btn-sm rounded-pill">
+                <i class="bi bi-arrow-left me-1"></i>返回首页
+            </a>
+        </div>
+
+        <!-- 城市搜索 -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-8">
+                <form th:action="@{/weather/statistics/search}" method="get" class="input-group input-group-lg shadow-sm rounded-3 overflow-hidden">
+                    <span class="input-group-text bg-white border-0">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input type="text" class="form-control border-0 py-3" name="city"
+                           placeholder="输入城市名称查看统计数据，如：北京、上海、深圳..." required
+                           th:value="${currentCity}">
+                    <input type="hidden" name="year" th:value="${year}">
+                    <button class="btn btn-primary px-4" type="submit">
+                        <i class="bi bi-bar-chart me-1"></i>查询统计
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 年份选择器 -->
+        <div th:if="${currentCityCode}" class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <h4>
+                <i class="bi bi-geo-alt text-primary me-2"></i>
+                <span th:text="${currentCity}">北京</span> - 天气数据统计
+            </h4>
+            <div class="d-flex align-items-center gap-2">
+                <form th:action="@{/weather/statistics/search}" method="get" class="d-flex align-items-center gap-2">
+                    <input type="hidden" name="city" th:value="${currentCity}">
+                    <label for="yearSelect" class="form-label mb-0 text-nowrap">选择年份：</label>
+                    <select class="form-select form-select-sm" id="yearSelect" name="year" style="width: auto;" onchange="this.form.submit()">
+                        <option th:each="y : ${#numbers.sequence(2020, 2026)}"
+                                th:value="${y}" th:text="${y} + '年'"
+                                th:selected="${y == year}">2026年</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <!-- 错误消息 -->
+        <div th:if="${statsError}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle me-1"></i>
+            <span th:text="${statsError}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- 图表区域 -->
+        <div th:if="${statistics != null and !statistics.isEmpty()}">
+            <!-- 第一行：温度折线图和降水量柱状图 -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-7">
+                    <div class="card border-0 shadow-lg rounded-4 h-100">
+                        <div class="card-header bg-primary text-white rounded-top-4 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>月平均温度趋势</h5>
+                            <span class="badge bg-white bg-opacity-25 text-white rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+                                <i class="bi bi-cloud me-1"></i>和风天气
+                            </span>
+                        </div>
+                        <div class="card-body p-4">
+                            <div id="temperatureChart" style="width: 100%; height: 350px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="card border-0 shadow-lg rounded-4 h-100">
+                        <div class="card-header bg-info text-white rounded-top-4">
+                            <h5 class="mb-0"><i class="bi bi-droplet me-2"></i>月降水量统计</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div id="precipChart" style="width: 100%; height: 350px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第二行：天气类型饼图和湿度折线图 -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-5">
+                    <div class="card border-0 shadow-lg rounded-4 h-100">
+                        <div class="card-header bg-warning text-dark rounded-top-4">
+                            <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>天气类型分布</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div id="weatherTypeChart" style="width: 100%; height: 350px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    <div class="card border-0 shadow-lg rounded-4 h-100">
+                        <div class="card-header bg-success text-white rounded-top-4">
+                            <h5 class="mb-0"><i class="bi bi-moisture me-2"></i>月平均湿度趋势</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div id="humidityChart" style="width: 100%; height: 350px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据表格 -->
+            <div class="card border-0 shadow-lg rounded-4 mb-4">
+                <div class="card-header bg-secondary text-white rounded-top-4">
+                    <h5 class="mb-0"><i class="bi bi-table me-2"></i>月度统计数据明细</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center">月份</th>
+                                    <th class="text-center">平均温度</th>
+                                    <th class="text-center">最高温度</th>
+                                    <th class="text-center">最低温度</th>
+                                    <th class="text-center">平均湿度</th>
+                                    <th class="text-center">总降水量</th>
+                                    <th class="text-center">晴天天数</th>
+                                    <th class="text-center">多云天数</th>
+                                    <th class="text-center">雨天天数</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="stat : ${statistics}">
+                                    <td class="text-center fw-bold" th:text="${stat.statMonth} + '月'">1月</td>
+                                    <td class="text-center" th:text="${stat.avgTemp != null ? #numbers.formatDecimal(stat.avgTemp, 1, 1) + '°C' : '--'}">5.2°C</td>
+                                    <td class="text-center text-danger" th:text="${stat.maxTemp != null ? #numbers.formatDecimal(stat.maxTemp, 1, 1) + '°C' : '--'}">30.5°C</td>
+                                    <td class="text-center text-info" th:text="${stat.minTemp != null ? #numbers.formatDecimal(stat.minTemp, 1, 1) + '°C' : '--'}">-5.2°C</td>
+                                    <td class="text-center" th:text="${stat.avgHumidity != null ? #numbers.formatDecimal(stat.avgHumidity, 1, 1) + '%' : '--'}">65.0%</td>
+                                    <td class="text-center" th:text="${stat.totalPrecip != null ? #numbers.formatDecimal(stat.totalPrecip, 1, 1) + 'mm' : '--'}">50.0mm</td>
+                                    <td class="text-center" th:text="${stat.sunnyDays != null ? stat.sunnyDays : '--'}">15</td>
+                                    <td class="text-center" th:text="${stat.cloudyDays != null ? stat.cloudyDays : '--'}">10</td>
+                                    <td class="text-center" th:text="${stat.rainDays != null ? stat.rainDays : '--'}">6</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 无数据提示 -->
+        <div th:if="${statistics == null or statistics.isEmpty()}" class="text-center py-5">
+            <i class="bi bi-bar-chart text-muted" style="font-size: 4rem;"></i>
+            <h4 class="text-muted mt-3">
+                <span th:if="${currentCity}">
+                    <span th:text="${currentCity}">北京</span>暂无统计数据
+                </span>
+                <span th:unless="${currentCity}">请先搜索城市</span>
+            </h4>
+            <p class="text-muted" th:if="${currentCity}">所选年份暂无天气统计数据，请尝试选择其他年份或搜索其他城市</p>
+            <p class="text-muted" th:unless="${currentCity}">在上方搜索框中输入城市名称，即可查看该城市的历年天气数据统计</p>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <div th:replace="fragments :: footer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script th:src="@{/js/main.js}"></script>
+    <script th:inline="javascript">
+        (function() {
+            var statistics = [[${statistics}]];
+            if (!statistics || statistics.length === 0) return;
+
+            var months = [];
+            var maxTemps = [];
+            var minTemps = [];
+            var avgTemps = [];
+            var precipData = [];
+            var humidityData = [];
+            var totalSunny = 0, totalCloudy = 0, totalRain = 0;
+
+            statistics.forEach(function(s) {
+                months.push(s.statMonth + '月');
+                avgTemps.push(s.avgTemp != null ? parseFloat(s.avgTemp) : null);
+                maxTemps.push(s.maxTemp != null ? parseFloat(s.maxTemp) : null);
+                minTemps.push(s.minTemp != null ? parseFloat(s.minTemp) : null);
+                precipData.push(s.totalPrecip != null ? parseFloat(s.totalPrecip) : 0);
+                humidityData.push(s.avgHumidity != null ? parseFloat(s.avgHumidity) : null);
+                totalSunny += (s.sunnyDays || 0);
+                totalCloudy += (s.cloudyDays || 0);
+                totalRain += (s.rainDays || 0);
+            });
+
+            // 月平均温度折线图
+            var tempChart = echarts.init(document.getElementById('temperatureChart'));
+            tempChart.setOption({
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['平均温度', '最高温度', '最低温度'], bottom: 0 },
+                grid: { left: '3%', right: '4%', bottom: '12%', top: '10%', containLabel: true },
+                xAxis: { type: 'category', data: months },
+                yAxis: { type: 'value', name: '°C', axisLabel: { formatter: '{value}°C' } },
+                series: [
+                    {
+                        name: '平均温度', type: 'line', data: avgTemps, smooth: true,
+                        lineStyle: { width: 3, color: '#ffc107' },
+                        itemStyle: { color: '#ffc107' },
+                        areaStyle: { color: 'rgba(255, 193, 7, 0.1)' }
+                    },
+                    {
+                        name: '最高温度', type: 'line', data: maxTemps, smooth: true,
+                        lineStyle: { width: 2, color: '#ff6b6b' },
+                        itemStyle: { color: '#ff6b6b' }
+                    },
+                    {
+                        name: '最低温度', type: 'line', data: minTemps, smooth: true,
+                        lineStyle: { width: 2, color: '#4ecdc4' },
+                        itemStyle: { color: '#4ecdc4' }
+                    }
+                ]
+            });
+
+            // 月降水量柱状图
+            var precipChart = echarts.init(document.getElementById('precipChart'));
+            precipChart.setOption({
+                tooltip: { trigger: 'axis', formatter: '{b}<br/>降水量: {c} mm' },
+                grid: { left: '3%', right: '4%', bottom: '8%', top: '10%', containLabel: true },
+                xAxis: { type: 'category', data: months },
+                yAxis: { type: 'value', name: 'mm' },
+                series: [{
+                    type: 'bar', data: precipData,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#667eea' },
+                            { offset: 1, color: '#764ba2' }
+                        ]),
+                        borderRadius: [4, 4, 0, 0]
+                    },
+                    barWidth: '50%',
+                    label: { show: true, position: 'top', formatter: '{c}mm', fontSize: 10 }
+                }]
+            });
+
+            // 天气类型分布饼图
+            var weatherTypeChart = echarts.init(document.getElementById('weatherTypeChart'));
+            weatherTypeChart.setOption({
+                tooltip: { trigger: 'item', formatter: '{b}: {c}天 ({d}%)' },
+                legend: { bottom: 0, orient: 'horizontal' },
+                series: [{
+                    type: 'pie', radius: ['40%', '70%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+                    label: { show: true, formatter: '{b}\n{c}天' },
+                    data: [
+                        { value: totalSunny, name: '晴天', itemStyle: { color: '#ffc107' } },
+                        { value: totalCloudy, name: '多云', itemStyle: { color: '#6c757d' } },
+                        { value: totalRain, name: '雨天', itemStyle: { color: '#0d6efd' } }
+                    ]
+                }]
+            });
+
+            // 月平均湿度折线图
+            var humidityChart = echarts.init(document.getElementById('humidityChart'));
+            humidityChart.setOption({
+                tooltip: { trigger: 'axis', formatter: '{b}<br/>平均湿度: {c}%' },
+                grid: { left: '3%', right: '4%', bottom: '8%', top: '10%', containLabel: true },
+                xAxis: { type: 'category', data: months },
+                yAxis: { type: 'value', name: '%', max: 100, axisLabel: { formatter: '{value}%' } },
+                series: [{
+                    type: 'line', data: humidityData, smooth: true,
+                    lineStyle: { width: 3, color: '#28a745' },
+                    itemStyle: { color: '#28a745' },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(40, 167, 69, 0.3)' },
+                            { offset: 1, color: 'rgba(40, 167, 69, 0.05)' }
+                        ])
+                    },
+                    label: { show: true, position: 'top', formatter: '{c}%', fontSize: 10 }
+                }]
+            });
+
+            // 响应式
+            window.addEventListener('resize', function() {
+                tempChart.resize();
+                precipChart.resize();
+                weatherTypeChart.resize();
+                humidityChart.resize();
+            });
+        })();
+    </script>
+</body>
+</html>

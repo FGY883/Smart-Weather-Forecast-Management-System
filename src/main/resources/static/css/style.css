@@ -1,0 +1,1113 @@
+/* ============================================================
+   智能天气预报系统 - 全局样式（Aether 设计语言）
+   ============================================================ */
+
+/* ---------- Google Fonts：Aether 字体系统 ---------- */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;1,9..144,400;1,9..144,600&family=Quicksand:wght@400;500;600;700&family=Baloo+2:wght@500;600;700;800&family=ZCOOL+KuaiLe&display=swap');
+
+/* ---------- 设计令牌（Aether 风） ---------- */
+:root {
+    /* 主色板 */
+    --primary-color: #4A90D9;
+    --primary-dark: #357ABD;
+    --secondary-color: #6C757D;
+    --success-color: #28A745;
+    --warning-color: #FFC107;
+    --danger-color: #DC3545;
+    --info-color: #17A2B8;
+
+    /* Aether 文字墨色 */
+    --ink: #34435e;
+    --ink-soft: #6b7b98;
+    --ink-faint: #93a1bb;
+    --cream: #fdf3ec;
+    --sky: #eaf4ff;
+    --sky-mid: #f4f6fd;
+
+    /* Aether 圆角/阴影 */
+    --r-card-organic: 26px 32px 24px 30px / 30px 24px 32px 26px;
+    --r-card-soft: 20px;
+    --shadow-soft: 0 18px 40px -18px rgba(60, 80, 120, 0.45);
+    --shadow-pop: 0 30px 64px -22px rgba(60, 80, 120, 0.55);
+    --shadow-rest: 0 2px 12px rgba(60, 80, 120, 0.08);
+    --shadow-hover: 0 14px 36px -12px rgba(60, 80, 120, 0.32);
+
+    /* 字体 */
+    --font-display: 'Fraunces', 'Playfair Display', Georgia, 'Songti SC', serif;
+    --font-body: 'Quicksand', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    --font-num: 'Baloo 2', 'Quicksand', sans-serif;
+    --font-cn: 'ZCOOL KuaiLe', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+
+    /* 缓动 */
+    --ease-aether: cubic-bezier(.2, .8, .3, 1);
+    --transition: all 0.3s var(--ease-aether);
+}
+
+/* ============================================================
+   全局重置 + 天空渐变背景 + 纸纹颗粒
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+    font-family: var(--font-body);
+    color: var(--ink);
+    min-height: 100vh;
+    background:
+        radial-gradient(880px 500px at 80% -10%, rgba(255, 222, 175, 0.55) 0%, transparent 62%),
+        radial-gradient(760px 460px at 6% 2%,   rgba(176, 222, 255, 0.55) 0%, transparent 60%),
+        linear-gradient(180deg, var(--sky) 0%, var(--sky-mid) 42%, var(--cream) 100%);
+    background-attachment: fixed;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 纸纹颗粒：全站统一的手绘质感 */
+body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0; opacity: 0.04; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+main, .container, .container-fluid { position: relative; z-index: 2; }
+
+main { flex: 1; }
+
+/* ============================================================
+   背景漂浮手绘云（Aether 标志性动效）
+   ============================================================ */
+.skydeco {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden;
+}
+.skydeco .drift {
+    position: absolute; opacity: .35;
+    animation: drift linear infinite;
+    font-family: var(--font-display);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 64px;
+    user-select: none;
+}
+@keyframes drift {
+    from { transform: translateX(-30vw); }
+    to   { transform: translateX(128vw); }
+}
+.skydeco .drift:nth-child(1) { top: 12%; animation-duration: 78s; opacity: 0.35; }
+.skydeco .drift:nth-child(2) { top: 42%; animation-duration: 104s; opacity: 0.22; }
+.skydeco .drift:nth-child(3) { top: 68%; animation-duration: 90s;  opacity: 0.18; }
+
+/* ============================================================
+   导航栏（Aether 半透明 + 玻璃感）
+   ============================================================ */
+.navbar {
+    background: rgba(255, 255, 255, 0.78) !important;
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    box-shadow: 0 6px 20px -10px rgba(60, 80, 120, 0.25);
+    padding: 0.7rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+    position: relative;
+    z-index: 10;
+}
+.navbar.bg-primary, .navbar.bg-dark {
+    background: rgba(255, 255, 255, 0.78) !important;
+}
+.navbar-brand {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: var(--ink) !important;
+    letter-spacing: -0.01em;
+    transition: transform .25s var(--ease-aether);
+}
+.navbar-brand:hover { transform: translateY(-1px); }
+.navbar-brand i { color: #6DB3F2; margin-right: 8px; }
+
+.nav-link {
+    color: var(--ink-soft) !important;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 0.55rem 1.05rem !important;
+    border-radius: 999px;
+    transition: color .25s, background-color .25s, transform .25s var(--ease-aether);
+    position: relative;
+}
+.nav-link:hover, .nav-link.active {
+    color: var(--ink) !important;
+    background: rgba(255, 222, 175, 0.4);
+    transform: translateY(-1px);
+}
+.nav-link i { font-size: 14px; opacity: 0.85; }
+
+.dropdown-menu {
+    border: none;
+    border-radius: 18px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: var(--shadow-pop);
+    backdrop-filter: blur(12px);
+}
+.dropdown-item {
+    border-radius: 12px;
+    padding: 9px 14px;
+    color: var(--ink);
+    font-weight: 600;
+    transition: background-color .2s, transform .15s var(--ease-aether);
+}
+.dropdown-item:hover {
+    background: linear-gradient(90deg, #fff1e0, #ffe9f2);
+    transform: translateX(2px);
+    color: var(--ink);
+}
+.dropdown-item.text-danger:hover { background: rgba(220, 53, 69, 0.08); }
+
+/* ============================================================
+   卡片（Aether 风：8/4 不规则圆角 + 强上浮）
+   ============================================================ */
+.card {
+    border: none;
+    border-radius: var(--r-card-soft);
+    box-shadow: var(--shadow-rest);
+    background: rgba(255, 255, 255, 0.86);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: transform .4s var(--ease-aether), box-shadow .4s var(--ease-aether);
+    overflow: hidden;
+    animation: cardIn .62s var(--ease-aether) both;
+}
+.card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-hover);
+}
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(60, 80, 120, 0.08);
+    font-weight: 700;
+    color: var(--ink);
+    padding: 1rem 1.25rem;
+}
+.card-body { color: var(--ink); }
+
+/* 主色调卡片（如首页左侧大温度卡）：保留渐变但用 Aether 蓝 */
+.card.bg-primary { background: linear-gradient(135deg, #4A90D9, #6DB3F2) !important; }
+
+/* ============================================================
+   按钮（Aether 风：胶囊 + 水波纹 + 上浮）
+   ============================================================ */
+.btn {
+    border-radius: 999px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    padding: 0.55rem 1.4rem;
+    transition: transform .28s var(--ease-aether), box-shadow .28s var(--ease-aether), background-color .28s;
+    position: relative;
+    overflow: hidden;
+}
+.btn-primary {
+    background: linear-gradient(135deg, #4A90D9, #6DB3F2);
+    border: none;
+    box-shadow: 0 6px 16px -8px rgba(74, 144, 217, 0.65);
+}
+.btn-primary:hover, .btn-primary:focus {
+    background: linear-gradient(135deg, #357ABD, #5A9FE0);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -10px rgba(74, 144, 217, 0.55);
+}
+.btn-outline-primary {
+    border: 2px solid #4A90D9;
+    color: #4A90D9;
+    background: rgba(255, 255, 255, 0.6);
+}
+.btn-outline-primary:hover {
+    background: #4A90D9;
+    color: #fff;
+    transform: translateY(-2px);
+}
+.btn-outline-secondary {
+    border: 2px solid rgba(60, 80, 120, 0.18);
+    color: var(--ink-soft);
+    background: rgba(255, 255, 255, 0.6);
+}
+.btn-outline-secondary:hover {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+    transform: translateY(-2px);
+}
+.btn-outline-info {
+    border: 2px solid #4A90D9;
+    color: #4A90D9;
+    background: rgba(255, 255, 255, 0.6);
+}
+.btn-outline-info:hover {
+    background: #4A90D9;
+    color: #fff;
+    transform: translateY(-2px);
+}
+.btn-success, .btn-info, .btn-warning, .btn-danger {
+    border: none;
+    box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.25);
+}
+.btn-lg { padding: 0.85rem 1.7rem; font-size: 1.05rem; }
+
+/* 通用按钮水波纹（Aether 标志性交互） */
+.btn::after, button::after, .form-control::after, a.btn::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.55);
+    transform: scale(0);
+    opacity: 0;
+    pointer-events: none;
+    width: 120px; height: 120px;
+    left: var(--ripple-x, 50%);
+    top: var(--ripple-y, 50%);
+    margin-left: -60px;
+    margin-top: -60px;
+    transition: transform .6s var(--ease-aether), opacity .8s;
+}
+.btn:active::after, button:active::after {
+    transform: scale(2.4);
+    opacity: 1;
+    transition: 0s;
+}
+
+/* 按钮图标、徽章 */
+.btn i { margin-right: 4px; }
+
+/* ============================================================
+   表单（Aether 风：胶囊输入 + 聚焦抬起）
+   ============================================================ */
+.form-control, .form-select, input[type="text"], input[type="password"],
+input[type="email"], input[type="number"], input[type="search"], textarea {
+    border-radius: 14px;
+    border: 2px solid rgba(60, 80, 120, 0.12);
+    padding: 0.7rem 1rem;
+    font-family: var(--font-body);
+    font-weight: 600;
+    color: var(--ink);
+    background: rgba(255, 255, 255, 0.85);
+    transition: border-color .25s, box-shadow .25s, transform .25s var(--ease-aether);
+}
+.form-control:focus, .form-select:focus, input:focus, textarea:focus {
+    border-color: #ffd0a4;
+    box-shadow: 0 0 0 4px rgba(255, 208, 164, 0.25);
+    outline: none;
+    transform: translateY(-1px);
+}
+.input-group-text {
+    border-radius: 14px 0 0 14px;
+    border: 2px solid rgba(60, 80, 120, 0.12);
+    border-right: none;
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--ink-soft);
+}
+.input-group .form-control { border-left: none; border-radius: 0 14px 14px 0; }
+.input-group-lg .form-control { padding: 1rem 1.25rem; }
+
+/* ============================================================
+   表格（Aether 风：圆角胶囊胶囊单元格 + hover 高亮）
+   ============================================================ */
+.table {
+    --bs-table-bg: transparent;
+    color: var(--ink);
+    border-radius: var(--r-card-soft);
+    overflow: hidden;
+}
+.table > thead {
+    background: linear-gradient(135deg, rgba(255, 222, 175, 0.45), rgba(176, 222, 255, 0.45));
+}
+.table > thead th {
+    font-family: var(--font-body);
+    font-weight: 700;
+    color: var(--ink);
+    border-bottom: 1px solid rgba(60, 80, 120, 0.1);
+    padding: 14px 12px;
+    letter-spacing: 0.02em;
+}
+.table > tbody td {
+    padding: 14px 12px;
+    border-color: rgba(60, 80, 120, 0.06);
+    font-weight: 600;
+    transition: background-color .25s;
+}
+.table-hover > tbody tr:hover > * {
+    background-color: rgba(255, 222, 175, 0.22) !important;
+    color: var(--ink) !important;
+}
+
+/* ============================================================
+   徽章（Aether 胶囊）
+   ============================================================ */
+.badge {
+    border-radius: 999px;
+    padding: 0.45em 0.85em;
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+}
+.badge.bg-light {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: var(--ink) !important;
+    border: 1px solid rgba(60, 80, 120, 0.1);
+}
+.badge.bg-info, .badge.bg-success, .badge.bg-warning, .badge.bg-danger, .badge.bg-primary {
+    color: #fff !important;
+}
+
+/* ============================================================
+   预警横幅（Aether 风：脉冲 + 渐变）
+   ============================================================ */
+.alert {
+    border: none;
+    border-radius: 18px;
+    padding: 14px 18px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.86);
+    backdrop-filter: blur(8px);
+    box-shadow: var(--shadow-rest);
+    color: var(--ink);
+}
+.alert-warning { background: linear-gradient(135deg, rgba(255, 193, 7, 0.22), rgba(241, 196, 15, 0.22)); color: #7a4f00; }
+.alert-danger  { background: linear-gradient(135deg, rgba(220, 53, 69, 0.18), rgba(231, 76, 60, 0.18));   color: #7a1d24; }
+.alert-info    { background: linear-gradient(135deg, rgba(176, 222, 255, 0.4), rgba(141, 198, 255, 0.4)); color: #1f4e7a; }
+
+/* 兼容原 warning-banner */
+.warning-banner {
+    border-radius: 18px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    color: #fff;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: pulse 2s infinite;
+    backdrop-filter: blur(6px);
+    box-shadow: var(--shadow-soft);
+}
+.warning-banner.level-RED    { background: linear-gradient(135deg, #DC3545, #E74C3C); }
+.warning-banner.level-ORANGE { background: linear-gradient(135deg, #FD7E14, #F39C12); }
+.warning-banner.level-YELLOW { background: linear-gradient(135deg, #FFC107, #F1C40F); color: #333; }
+.warning-banner.level-BLUE   { background: linear-gradient(135deg, #007BFF, #3498DB); }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.92; transform: scale(1.005); }
+}
+
+/* ============================================================
+   实时天气卡片 / 7 天预报横滑
+   ============================================================ */
+.weather-main-card {
+    background: linear-gradient(135deg, rgba(74, 144, 217, 0.92), rgba(109, 179, 242, 0.92), rgba(135, 206, 235, 0.92));
+    color: #fff;
+    border-radius: 26px 32px 24px 30px / 30px 24px 32px 26px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(10px);
+    animation: cardIn .7s var(--ease-aether) both;
+}
+.weather-main-card .temp-display {
+    font-family: var(--font-num);
+    font-size: 5rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+.weather-main-card .temp-display .unit {
+    font-size: 1.8rem;
+    vertical-align: super;
+    font-weight: 600;
+}
+.weather-main-card .weather-text {
+    font-family: var(--font-cn);
+    font-size: 1.6rem;
+    margin-top: 0.5rem;
+    opacity: 0.95;
+}
+.weather-main-card .weather-detail {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+.weather-detail-item { text-align: center; }
+.weather-detail-item .label { font-size: 0.85rem; opacity: 0.85; }
+.weather-detail-item .value { font-size: 1.2rem; font-weight: 700; margin-top: 0.25rem; }
+
+.forecast-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 1rem;
+    padding: 0.5rem 0;
+    scrollbar-width: thin;
+}
+.forecast-scroll::-webkit-scrollbar { height: 6px; }
+.forecast-scroll::-webkit-scrollbar-thumb {
+    background: rgba(60, 80, 120, 0.25);
+    border-radius: 999px;
+}
+.forecast-card {
+    min-width: 140px;
+    text-align: center;
+    padding: 1.2rem 1rem;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 22px 26px 20px 24px / 24px 20px 26px 22px;
+    box-shadow: var(--shadow-rest);
+    transition: transform .35s var(--ease-aether), box-shadow .35s var(--ease-aether);
+    flex-shrink: 0;
+    backdrop-filter: blur(8px);
+    animation: cardIn .5s var(--ease-aether) both;
+}
+.forecast-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: var(--shadow-hover);
+}
+.forecast-card .date {
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 0.9rem;
+}
+.forecast-card .weather-icon { font-size: 2rem; margin: 0.5rem 0; }
+.forecast-card .temp-range { font-size: 0.95rem; margin-top: 0.5rem; }
+.forecast-card .temp-high {
+    color: #E96B5E;
+    font-weight: 700;
+    font-family: var(--font-num);
+}
+.forecast-card .temp-low {
+    color: #6DB3F2;
+    font-weight: 700;
+    font-family: var(--font-num);
+}
+
+/* ============================================================
+   AI预测 / 未来天气 卡片网格（Aether 风）
+   ============================================================ */
+.ai-prediction-card {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border-radius: 26px 32px 24px 30px / 30px 24px 32px 26px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-soft);
+}
+.ai-prediction-card .confidence-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+}
+
+/* ============================================================
+   登录/注册（Aether 风：居中卡片 + 装饰）
+   ============================================================ */
+.auth-container {
+    max-width: 460px;
+    margin: 3rem auto;
+    padding: 0 1rem;
+    position: relative;
+    z-index: 2;
+}
+.auth-card {
+    border-radius: 30px;
+    padding: 2.5rem 2.2rem;
+    box-shadow: var(--shadow-pop);
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(14px);
+    animation: cardIn .7s var(--ease-aether) both;
+}
+.auth-card .auth-header { text-align: center; margin-bottom: 2rem; }
+.auth-card .auth-header h2 {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+}
+.auth-card .auth-header p { color: var(--ink-soft); margin-top: 0.5rem; font-weight: 600; }
+.auth-card .btn-primary {
+    background: linear-gradient(135deg, #4A90D9, #6DB3F2);
+    border: none;
+    border-radius: 999px;
+    padding: 0.85rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+.auth-card .btn-primary:hover {
+    background: linear-gradient(135deg, #357ABD, #5A9FE0);
+    transform: translateY(-2px);
+}
+
+/* ============================================================
+   个人中心
+   ============================================================ */
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4A90D9, #6DB3F2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: #fff;
+    margin: 0 auto 1rem;
+    box-shadow: 0 12px 28px -10px rgba(74, 144, 217, 0.55);
+}
+.profile-info .info-item {
+    padding: 0.7rem 0;
+    border-bottom: 1px solid rgba(60, 80, 120, 0.08);
+}
+.profile-info .info-item:last-child { border-bottom: none; }
+.profile-info .info-label {
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* ============================================================
+   统计图表 / 通用 section
+   ============================================================ */
+.chart-container {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: var(--r-card-soft);
+    box-shadow: var(--shadow-rest);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    backdrop-filter: blur(8px);
+}
+.chart-container .chart-title {
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin-bottom: 1rem;
+    color: var(--ink);
+    font-family: var(--font-cn);
+}
+
+/* 收藏按钮 */
+.btn-favorite {
+    background: rgba(255, 255, 255, 0.25);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.5rem 1rem;
+    transition: transform .25s var(--ease-aether), background-color .25s;
+}
+.btn-favorite:hover { background: rgba(255, 255, 255, 0.4); color: #fff; transform: translateY(-1px); }
+.btn-favorite.active { background: #FFC107; border-color: #FFC107; color: #333; }
+
+/* ============================================================
+   页脚（Aether 风：透明背景 + 居中）
+   ============================================================ */
+.footer, footer.bg-light {
+    background: rgba(255, 255, 255, 0.65) !important;
+    backdrop-filter: blur(12px);
+    color: var(--ink-soft);
+    padding: 2rem 0;
+    margin-top: 3rem;
+    text-align: center;
+    font-size: 0.9rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.5) !important;
+    position: relative;
+    z-index: 2;
+}
+.footer a, footer a { color: var(--ink-soft); }
+.footer a:hover, footer a:hover { color: var(--ink); }
+
+/* ============================================================
+   通用 section 标题 + 空状态
+   ============================================================ */
+.section-title {
+    font-family: var(--font-cn);
+    font-weight: 700;
+    font-size: 1.4rem;
+    margin-bottom: 1.2rem;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.section-title i {
+    color: #4A90D9;
+    background: rgba(255, 222, 175, 0.4);
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 18px;
+}
+
+h1, h2, h3, h4, h5, h6 { color: var(--ink); font-family: var(--font-cn); }
+h3 { font-family: var(--font-cn); font-weight: 700; }
+.h1, .h2, .h3, .h4, .h5, .h6 { color: var(--ink); }
+
+.text-muted { color: var(--ink-soft) !important; }
+.text-primary { color: #4A90D9 !important; }
+.text-info    { color: #17A2B8 !important; }
+.text-danger  { color: #DC3545 !important; }
+.text-warning { color: #d97706 !important; }
+.text-success { color: #28A745 !important; }
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--ink-soft);
+}
+.empty-state i { font-size: 3rem; margin-bottom: 1rem; display: block; color: var(--ink-faint); }
+
+/* ============================================================
+   预警等级标签
+   ============================================================ */
+.badge-warning-level {
+    padding: 0.4em 0.8em;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+.badge-RED    { background: #DC3545; color: #fff; }
+.badge-ORANGE { background: #FD7E14; color: #fff; }
+.badge-YELLOW { background: #FFC107; color: #333; }
+.badge-BLUE   { background: #007BFF; color: #fff; }
+
+/* 温度字号强调 */
+.display-1, .display-2, .display-3, .display-4, .display-5 {
+    font-family: var(--font-num);
+    letter-spacing: -0.02em;
+}
+
+/* ============================================================
+   入场动画（Aether 风）
+   ============================================================ */
+.fade-in {
+    animation: fadeIn .55s var(--ease-aether) both;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(24px) scale(.97); }
+    to   { opacity: 1; transform: none; }
+}
+
+@keyframes riseIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@keyframes pop {
+    from { opacity: 0; transform: scale(.95) translateY(-6px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@keyframes sheen {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+}
+
+/* 错相淡入：列表/网格分批入场（按 nth-child） */
+.row.g-3 > [class*="col-"], .d-flex > .card {
+    animation: cardIn .6s var(--ease-aether) both;
+}
+.row.g-3 > [class*="col-"]:nth-child(1)  { animation-delay: 0.02s; }
+.row.g-3 > [class*="col-"]:nth-child(2)  { animation-delay: 0.08s; }
+.row.g-3 > [class*="col-"]:nth-child(3)  { animation-delay: 0.14s; }
+.row.g-3 > [class*="col-"]:nth-child(4)  { animation-delay: 0.20s; }
+.row.g-3 > [class*="col-"]:nth-child(5)  { animation-delay: 0.26s; }
+.row.g-3 > [class*="col-"]:nth-child(6)  { animation-delay: 0.32s; }
+.row.g-3 > [class*="col-"]:nth-child(7)  { animation-delay: 0.38s; }
+.row.g-3 > [class*="col-"]:nth-child(8)  { animation-delay: 0.44s; }
+.row.g-3 > [class*="col-"]:nth-child(9)  { animation-delay: 0.50s; }
+.row.g-3 > [class*="col-"]:nth-child(10) { animation-delay: 0.56s; }
+.row.g-3 > [class*="col-"]:nth-child(n+11) { animation-delay: 0.6s; }
+
+/* section 卡片错相入场 */
+.card { animation-delay: 0.04s; }
+.mb-4 > .card:nth-of-type(2) { animation-delay: 0.12s; }
+.mb-4 > .card:nth-of-type(3) { animation-delay: 0.20s; }
+.mb-4 > .card:nth-of-type(4) { animation-delay: 0.28s; }
+
+/* ============================================================
+   天气图标色板
+   ============================================================ */
+.weather-icon-sunny  { color: #FFD56B; }
+.weather-icon-cloudy { color: #87CEEB; }
+.weather-icon-rainy  { color: #4682B4; }
+.weather-icon-snowy  { color: #B0E0E6; }
+
+/* ============================================================
+   天气场景系统（Aether · 七种天空底色 + 元素动效）
+   ============================================================ */
+
+/* 卡片内的场景层 */
+.scene {
+  position: absolute; inset: 0; z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+/* 七种天空底色（按 weatherText 选用） */
+.sky-clear { background: linear-gradient(165deg, #4fb3ff 0%, #8fd6ff 48%, #ffe6a8 100%); }
+.sky-cloudy{ background: linear-gradient(165deg, #8fa7c6 0%, #b3c4da 55%, #dbe4ef 100%); }
+.sky-rain  { background: linear-gradient(165deg, #54677f 0%, #74879f 55%, #a9b7c9 100%); }
+.sky-snow  { background: linear-gradient(165deg, #8fb0d3 0%, #c2d8ee 55%, #eff7fd 100%); }
+.sky-storm { background: linear-gradient(165deg, #2c3350 0%, #434c70 55%, #6d7296 100%); }
+.sky-fog   { background: linear-gradient(165deg, #98a2b1 0%, #b8c0cb 55%, #d4dae2 100%); }
+.sky-night { background: linear-gradient(165deg, #1a2145 0%, #302c5e 55%, #5a4b7d 100%); }
+
+/* 场景底部色罩（保证白字可读） */
+.sheen { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 42%, rgba(22, 32, 58, .34) 100%); pointer-events: none; }
+.sky-fog .sheen, .sky-snow .sheen { background: linear-gradient(180deg, transparent 30%, rgba(34, 46, 72, .46) 100%); }
+
+/* 太阳 */
+.sun {
+  position: absolute; top: -34px; right: -30px; width: 132px; height: 132px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 38%, #fff8d8, #ffd45f 58%, #ffb04a);
+  box-shadow: 0 0 54px 14px rgba(255, 209, 90, .6);
+  animation: sunPulse 5.5s ease-in-out infinite;
+}
+@keyframes sunPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+.sunrays { position: absolute; top: 34px; right: 34px; width: 0; height: 0; animation: spin 30s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.sunrays .ray {
+  position: absolute; top: -3px; left: -88px; width: 176px; height: 5px; border-radius: 5px;
+  background: linear-gradient(90deg, transparent, rgba(255, 230, 160, .6), transparent);
+}
+
+/* 月亮 */
+.moon {
+  position: absolute; top: -22px; right: -8px; width: 104px; height: 104px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 32%, #fff, #e2e6ff 58%, #b7bde8);
+  box-shadow: 0 0 46px 10px rgba(198, 208, 255, .45);
+}
+.moon::before, .moon::after {
+  content: ""; position: absolute; border-radius: 50%; background: rgba(150, 158, 205, .32);
+}
+.moon::before { width: 20px; height: 20px; top: 26px; left: 22px; }
+.moon::after  { width: 13px; height: 13px; top: 58px; left: 52px; }
+
+/* 云（分区错相漂移） */
+.cloudgrp {
+  position: absolute; left: 0; width: 100%;
+  animation-name: floatX; animation-timing-function: linear; animation-iteration-count: infinite;
+}
+@keyframes floatX { from { transform: translateX(-125%); } to { transform: translateX(125%); } }
+.bobb { animation-name: bob; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+.cloudart { display: block; filter: drop-shadow(0 6px 10px rgba(40, 60, 100, .18)); }
+
+/* 雨 */
+.drop {
+  position: absolute; top: -14%; width: 2px; border-radius: 2px;
+  background: linear-gradient(transparent, rgba(255, 255, 255, .85));
+  animation: fall linear infinite;
+}
+@keyframes fall { to { transform: translateY(420px); } }
+
+/* 雪 */
+.flake {
+  position: absolute; top: -10%; color: #fff;
+  animation: snowfall linear infinite; will-change: transform;
+}
+@keyframes snowfall { to { transform: translateY(420px) rotate(340deg); } }
+
+/* 闪电 */
+.bolt { position: absolute; inset: 0; background: rgba(255, 255, 255, 0); animation: flash 7s infinite; }
+@keyframes flash {
+  0%, 91%, 100% { background: rgba(255, 255, 255, 0); }
+  92% { background: rgba(255, 255, 255, .5); }
+  93.5% { background: rgba(255, 255, 255, 0); }
+  95% { background: rgba(255, 255, 255, .34); }
+  96.5% { background: rgba(255, 255, 255, 0); }
+}
+.boltline { position: absolute; top: 26%; left: 56%; opacity: 0; animation: zap 7s infinite; }
+@keyframes zap {
+  0%, 91%, 100% { opacity: 0; }
+  92%, 94% { opacity: 1; }
+  93%, 95.5% { opacity: 0; }
+}
+
+/* 雾 */
+.fogband {
+  position: absolute; left: -32%; width: 164%; height: 46px; border-radius: 50%;
+  background: rgba(255, 255, 255, .5); filter: blur(9px);
+  animation: fogmove ease-in-out infinite alternate;
+}
+@keyframes fogmove { from { transform: translateX(-7%); } to { transform: translateX(7%); } }
+
+/* 星空 */
+.star {
+  position: absolute; width: 3px; height: 3px; border-radius: 50%;
+  background: #fff; animation: twinkle ease-in-out infinite;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: .22; transform: scale(.65); }
+  50% { opacity: 1; transform: scale(1.35); }
+}
+.shoot {
+  position: absolute; width: 88px; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), #fff);
+  animation: shoot 9s ease-in infinite; opacity: 0;
+}
+@keyframes shoot {
+  0%   { opacity: 0; transform: translate(0, 0) rotate(20deg); }
+  2%   { opacity: 1; }
+  10%  { opacity: 0; transform: translate(150px, 58px) rotate(20deg); }
+  100% { opacity: 0; transform: translate(150px, 58px) rotate(20deg); }
+}
+
+/* 飞鸟 */
+.bird { position: absolute; animation: birdfly linear infinite; }
+@keyframes birdfly { from { transform: translateX(-40px); } to { transform: translateX(340px); } }
+
+/* ============================================================
+   Aether 城市卡（响应式网格 + 7 场景 + 完整交互）
+   ============================================================ */
+
+/* 网格容器：auto-fill 每卡最小 280px */
+.aether-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 22px;
+  position: relative;
+  z-index: 2;
+}
+
+.aether-card {
+  position: relative;
+  border-radius: 26px 32px 24px 30px / 30px 24px 32px 26px;
+  overflow: hidden;
+  min-height: 280px;
+  cursor: pointer;
+  color: #fff;
+  isolation: isolate;
+  box-shadow: var(--shadow-soft);
+  transition: transform .38s var(--ease-aether), box-shadow .38s var(--ease-aether);
+  animation: cardIn .62s var(--ease-aether) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+  text-shadow: 0 2px 12px rgba(28, 38, 66, .4);
+}
+.aether-card:hover {
+  transform: translateY(-7px) scale(1.015);
+  box-shadow: var(--shadow-pop);
+}
+.aether-card:focus-visible { outline: 3px solid #ffd0a4; outline-offset: 3px; }
+
+.aether-card .content {
+  position: relative; z-index: 5;
+  padding: 22px 22px 18px;
+  display: flex; flex-direction: column; height: 100%;
+}
+
+.aether-card .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.aether-card .city { font-family: var(--font-cn); font-size: 24px; line-height: 1.12; letter-spacing: .02em; }
+.aether-card .city .py {
+  display: block; font-family: var(--font-num); font-size: 11px; font-weight: 600;
+  letter-spacing: .22em; opacity: .85; margin-top: 3px; text-transform: uppercase;
+}
+.aether-card .del {
+  flex: none; width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer;
+  background: rgba(255, 255, 255, .26); color: #fff; font-size: 14px; line-height: 1;
+  backdrop-filter: blur(4px); opacity: 0; transform: scale(.55) rotate(-25deg);
+  transition: .26s var(--ease-aether);
+}
+.aether-card:hover .del { opacity: 1; transform: none; }
+.aether-card .del:hover { background: rgba(255, 96, 96, .9); transform: rotate(90deg) scale(1.08); }
+
+.aether-card .spacer { flex: 1; }
+.aether-card .temp {
+  font-family: var(--font-num); font-size: 52px; font-weight: 800; line-height: .95;
+  letter-spacing: -.02em;
+}
+.aether-card .temp sup { font-size: 20px; font-weight: 600; vertical-align: super; opacity: .85; margin-left: 2px; }
+.aether-card .desc {
+  font-family: var(--font-cn); font-size: 16px; margin-top: 5px;
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+}
+.aether-card .desc .en {
+  font-family: var(--font-num); font-size: 11px; font-weight: 600;
+  letter-spacing: .16em; opacity: .82; text-transform: uppercase;
+}
+.aether-card .range {
+  font-family: var(--font-num); font-size: 14px; font-weight: 700;
+  opacity: .95; margin-top: 5px; letter-spacing: .02em;
+}
+.aether-card .meta {
+  display: flex; gap: 18px; margin-top: 12px;
+  font-family: var(--font-num); font-size: 14px; font-weight: 700;
+}
+.aether-card .meta div span {
+  display: block; font-family: var(--font-body); font-size: 10px; font-weight: 600;
+  letter-spacing: .14em; opacity: .78; margin-top: 1px; text-transform: uppercase;
+}
+.aether-card .warn {
+  align-self: flex-start; margin-top: 10px; padding: 4px 11px; border-radius: 999px;
+  background: rgba(255, 236, 214, .92); color: #7a3b1d;
+  font-family: var(--font-body); font-size: 11px; font-weight: 700; text-shadow: none;
+  display: inline-flex; align-items: center; gap: 4px;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.aether-card .stamp {
+  position: absolute; left: 22px; bottom: 12px;
+  font-size: 10px; opacity: .72; letter-spacing: .08em; font-family: var(--font-num);
+}
+
+/* 卡片水波纹（点击） */
+.aether-card .ripple {
+  position: absolute; border-radius: 50%;
+  background: rgba(255, 255, 255, .48); transform: scale(0);
+  animation: rip .62s var(--ease-aether); pointer-events: none; z-index: 6;
+}
+@keyframes rip { to { transform: scale(4.2); opacity: 0; } }
+
+/* 加载骨架 */
+.aether-card.loading {
+  background: linear-gradient(160deg, #c9d8ec, #e6ecf6);
+  cursor: default;
+}
+.aether-card.loading .content { justify-content: flex-end; }
+.aether-card.loading .ph {
+  height: 14px; border-radius: 99px; margin-bottom: 10px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, .5), rgba(255, 255, 255, .95), rgba(255, 255, 255, .5));
+  background-size: 200% 100%; animation: sheen 1.3s linear infinite;
+}
+
+/* 卡片标题（Aether 风格） */
+.aether-section-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.1;
+  color: var(--ink);
+  text-align: center;
+  margin-bottom: 4px;
+}
+.aether-section-sub {
+  font-family: var(--font-body);
+  font-size: 12px; font-weight: 600;
+  letter-spacing: .52em; text-transform: uppercase;
+  color: var(--ink-soft); text-align: center;
+}
+.aether-section-tag {
+  margin-top: 10px; font-size: 13.5px;
+  color: var(--ink-faint); text-align: center;
+}
+
+/* Toast */
+.aether-toast {
+  position: fixed; left: 50%; bottom: 32px; transform: translate(-50%, 90px);
+  background: rgba(52, 67, 94, .96); color: #fff; padding: 12px 26px; border-radius: 999px;
+  font-size: 14px; font-weight: 600; z-index: 99; opacity: 0;
+  transition: transform .38s var(--ease-aether), opacity .38s;
+  box-shadow: var(--shadow-pop); pointer-events: none;
+}
+.aether-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* 紧凑型场景卡（用于 7 天预报横排） */
+.aether-mini {
+  position: relative;
+  border-radius: 20px 24px 18px 22px / 22px 18px 24px 20px;
+  overflow: hidden;
+  min-height: 168px;
+  cursor: pointer;
+  color: #fff;
+  isolation: isolate;
+  box-shadow: var(--shadow-soft);
+  transition: transform .35s var(--ease-aether), box-shadow .35s var(--ease-aether);
+  text-shadow: 0 2px 10px rgba(28, 38, 66, .4);
+  padding: 14px 16px;
+  display: flex; flex-direction: column;
+  text-align: center;
+}
+.aether-mini:hover { transform: translateY(-4px) scale(1.01); box-shadow: var(--shadow-hover); }
+.aether-mini .date { font-family: var(--font-body); font-weight: 700; font-size: 14px; opacity: .95; }
+.aether-mini .text { font-family: var(--font-cn); font-size: 14px; margin-top: 2px; }
+.aether-mini .temp { font-family: var(--font-num); font-size: 28px; font-weight: 800; margin-top: 8px; line-height: 1; letter-spacing: -.01em; }
+.aether-mini .range { font-family: var(--font-num); font-size: 12px; font-weight: 700; margin-top: 4px; opacity: .95; }
+.aether-mini .scene { border-radius: 20px 24px 18px 22px / 22px 18px 24px 20px; }
+
+/* 7 天均分布局：7 列等宽，自适应 */
+.aether-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.75rem;
+  position: relative;
+  z-index: 2;
+}
+.aether-week-cell {
+  /* 单元宽度跟随 grid 列分摊，高度收窄以匹配一行的高度 */
+  min-height: 168px;
+  padding: 12px 8px;
+  font-size: 13px;
+}
+.aether-week-cell .date { font-size: 13px; }
+.aether-week-cell .text { font-size: 13px; margin-top: 2px; }
+.aether-week-cell .temp { font-size: 26px; margin-top: 6px; }
+.aether-week-cell .range { font-size: 11px; margin-top: 3px; }
+
+@media (max-width: 992px) {
+  .aether-week-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .aether-week-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .aether-week-cell { min-height: 144px; }
+}
+
+@media (max-width: 600px) {
+  .aether-grid { grid-template-columns: 1fr; gap: 18px; }
+  .aether-card { min-height: 250px; }
+  .aether-card .temp { font-size: 46px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aether-card, .cloudgrp, .bobb, .sun, .sunrays, .drop, .flake, .star, .shoot, .bird {
+    animation-duration: .001ms !important; animation-iteration-count: 1 !important;
+  }
+}
+
+/* ============================================================
+   响应式
+   ============================================================ */
+@media (max-width: 768px) {
+    .weather-main-card .temp-display { font-size: 3.5rem; }
+    .weather-main-card .weather-detail { grid-template-columns: repeat(2, 1fr); }
+    .forecast-card { min-width: 120px; }
+    .auth-card { padding: 1.8rem; border-radius: 24px; }
+    .skydeco .drift { font-size: 44px; }
+}
+
+/* ============================================================
+   滚动条（Aether 风）
+   ============================================================ */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: rgba(60, 80, 120, 0.04); }
+::-webkit-scrollbar-thumb {
+    background: rgba(74, 144, 217, 0.45);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(74, 144, 217, 0.7); background-clip: padding-box; border: 2px solid transparent; }
+
+/* ============================================================
+   prefers-reduced-motion 适配
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    .skydeco { display: none; }
+}

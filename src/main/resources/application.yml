@@ -1,0 +1,65 @@
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+
+spring:
+  application:
+    name: smart-weather-forecast
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:sql/schema.sql
+      data-locations: classpath:sql/data.sql
+      continue-on-error: true
+      # 关键：不显式指定时会回落到 JVM 平台默认编码（Windows 中文环境为 GBK），
+      # 导致 UTF-8 编码的 schema.sql / data.sql 被按 GBK 解码，中文以乱码写入数据库。
+      encoding: UTF-8
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    cache: false
+  datasource:
+    # 注意：JDK8 下 Connector/J 不识别 characterEncoding=utf8mb4（会抛
+    # UnsupportedEncodingException: utf8mb4），这里保持 utf8，
+    # 配合建库/建表使用 utf8mb4 即可正常存储中文。
+    url: jdbc:mysql://localhost:3306/weather_forecast?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.weather.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# 天气API配置（和风天气）
+weather:
+  api:
+    key: 
+    base-url: https://n37mdb4xgk.re.qweatherapi.com/v7
+    geo-url: https://n37mdb4xgk.re.qweatherapi.com/geo
+
+# AI预测配置
+ai:
+  prediction:
+    history-days: 30
+    forecast-days: 7
+  warning:
+    high-temp-threshold: 35
+    low-temp-threshold: 0
+    rain-threshold: 50
+    wind-threshold: 8
+
+logging:
+  level:
+    com.weather: debug

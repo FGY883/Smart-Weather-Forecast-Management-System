@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 智能天气预报系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <!-- Aether 背景云朵漂移装饰 -->
+    <div class="skydeco" aria-hidden="true">
+        <div class="drift">☁</div>
+        <div class="drift">☁</div>
+        <div class="drift">☁</div>
+    </div>
+
+    <!-- 导航栏 -->
+    <div th:replace="fragments :: navbar"></div>
+
+    <!-- 登录表单 -->
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-5 col-lg-4">
+                <div class="card shadow-lg border-0 rounded-4">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <i class="bi bi-cloud-sun text-primary" style="font-size: 3rem;"></i>
+                            <h3 class="fw-bold mt-2">欢迎登录</h3>
+                            <p class="text-muted small">智能天气预报系统</p>
+                        </div>
+
+                        <!-- 错误消息 -->
+                        <div th:if="${errorMsg}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-circle me-1"></i>
+                            <span th:text="${errorMsg}"></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+
+                        <!-- 成功消息 -->
+                        <div th:if="${successMsg}" class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="bi bi-check-circle me-1"></i>
+                            <span th:text="${successMsg}"></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+
+                        <form th:action="@{/doLogin}" method="post">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">
+                                    <i class="bi bi-person me-1"></i>用户名
+                                </label>
+                                <input type="text" class="form-control form-control-lg" id="username"
+                                       name="username" placeholder="请输入用户名" required autofocus>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">
+                                    <i class="bi bi-lock me-1"></i>密码
+                                </label>
+                                <input type="password" class="form-control form-control-lg" id="password"
+                                       name="password" placeholder="请输入密码" required>
+                            </div>
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg rounded-3">
+                                    <i class="bi bi-box-arrow-in-right me-1"></i>登 录
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="text-center mt-4">
+                            <span class="text-muted">还没有账号？</span>
+                            <a th:href="@{/register}" class="text-decoration-none fw-bold">立即注册</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <div th:replace="fragments :: footer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/main.js}"></script>
+</body>
+</html>

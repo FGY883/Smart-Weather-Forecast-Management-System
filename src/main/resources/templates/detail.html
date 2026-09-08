@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${currentCity != null ? currentCity + ' - 天气详情' : '天气详情'}">天气详情 - 智能天气预报系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <!-- Aether 背景云朵漂移装饰 -->
+    <div class="skydeco" aria-hidden="true">
+        <div class="drift">☁</div>
+        <div class="drift">☁</div>
+        <div class="drift">☁</div>
+    </div>
+
+    <!-- 导航栏 -->
+    <div th:replace="fragments :: navbar"></div>
+
+    <div class="container mt-4">
+        <!-- 页面标题 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>
+                <i class="bi bi-geo-alt text-primary me-2"></i>
+                <span th:text="${currentCity}">北京</span> - 天气详情
+            </h3>
+            <div>
+                <a th:href="@{/}" class="btn btn-outline-secondary btn-sm rounded-pill">
+                    <i class="bi bi-arrow-left me-1"></i>返回首页
+                </a>
+                <!-- 收藏按钮 -->
+                <span th:if="${user != null}">
+                    <button th:if="${isFavorited != null and isFavorited}"
+                            class="btn btn-warning btn-sm rounded-pill" id="favoriteBtn"
+                            onclick="toggleFavorite(false, this)"
+                            th:attr="data-city=${currentCity}, data-city-code=${currentCityCode}">
+                        <i class="bi bi-star-fill me-1"></i>已收藏
+                    </button>
+                    <button th:if="${isFavorited == null or !isFavorited}"
+                            class="btn btn-outline-warning btn-sm rounded-pill" id="favoriteBtn"
+                            onclick="toggleFavorite(true, this)"
+                            th:attr="data-city=${currentCity}, data-city-code=${currentCityCode}">
+                        <i class="bi bi-star me-1"></i>收藏
+                    </button>
+                </span>
+            </div>
+        </div>
+
+        <!-- 预警横幅 -->
+        <div th:if="${warnings != null and !warnings.isEmpty()}" class="mb-4">
+            <div th:each="warning : ${warnings}" class="alert mb-2 d-flex align-items-center rounded-3 shadow-sm"
+                 th:classappend="${warning.warningLevel == 'RED' ? 'alert-danger' : (warning.warningLevel == 'ORANGE' ? 'alert-warning' : (warning.warningLevel == 'YELLOW' ? 'alert-info' : 'alert-primary'))}"
+                 role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i>
+                <div class="flex-grow-1">
+                    <strong th:text="${warning.warningTitle}">预警标题</strong>
+                    <span class="badge ms-2"
+                          th:classappend="${warning.warningLevel == 'RED' ? 'bg-danger' : (warning.warningLevel == 'ORANGE' ? 'bg-warning text-dark' : (warning.warningLevel == 'YELLOW' ? 'bg-info text-dark' : 'bg-primary'))}"
+                          th:text="${warning.warningLevel}">等级</span>
+                    <span class="badge bg-secondary ms-1" th:text="${warning.warningType}">类型</span>
+                    <p class="mb-0 mt-1 small" th:text="${warning.warningContent}">预警内容</p>
+                </div>
+                <small class="text-muted ms-3 text-nowrap"
+                       th:text="${#temporals.format(warning.startTime, 'MM-dd HH:mm')}">时间</small>
+            </div>
+        </div>
+
+        <!-- 错误消息 -->
+        <div th:if="${weatherError}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-circle me-1"></i>
+            <span th:text="${weatherError}"></span>
+        </div>
+
+        <!-- 实时天气详情卡片 -->
+        <div th:if="${realtime != null}" class="row mb-4">
+            <div class="col-lg-6 mb-3">
+                <div class="card border-0 shadow-lg rounded-4 h-100">
+                    <div class="card-header bg-primary text-white rounded-top-4 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-cloud-sun me-2"></i>实时天气</h5>
+                        <span class="badge bg-white bg-opacity-25 text-white rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+                            <i class="bi bi-cloud me-1"></i>和风天气
+                        </span>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="text-center mb-4">
+                            <span class="display-2 fw-bold text-primary"
+                                  th:text="${realtime.temp != null ? #numbers.formatDecimal(realtime.temp, 1, 0) + '°C' : '--°C'}">25°C</span>
+                            <h4 class="mt-2" th:text="${realtime.weatherText}">晴</h4>
+                            <p class="text-muted" th:text="${#temporals.format(realtime.weatherDate, 'yyyy年MM月dd日')}">2026年01月01日</p>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="card bg-light border-0 rounded-3">
+                                    <div class="card-body text-center p-3">
+                                        <i class="bi bi-thermometer-half text-danger fs-4"></i>
+                                        <small class="text-muted d-block mt-1">体感温度</small>
+                                        <strong th:text="${realtime.feelsLike != null ? #numbers.formatDecimal(realtime.feelsLike, 1, 0) + '°C' : '--'}">25°C</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-light border-0 rounded-3">
+                                    <div class="card-body text-center p-3">
+                                        <i class="bi bi-droplet-fill text-primary fs-4"></i>
+                                        <small class="text-muted d-block mt-1">湿度</small>
+                                        <strong th:text="${realtime.humidity != null ? realtime.humidity + '%' : '--'}">60%</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-light border-0 rounded-3">
+                                    <div class="card-body text-center p-3">
+                                        <i class="bi bi-wind text-info fs-4"></i>
+                                        <small class="text-muted d-block mt-1">风向</small>
+                                        <strong th:text="${realtime.windDir}">北风</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-light border-0 rounded-3">
+                                    <div class="card-body text-center p-3">
+                                        <i class="bi bi-speedometer text-success fs-4"></i>
+                                        <small class="text-muted d-block mt-1">风速</small>
+                                        <strong th:text="${realtime.windSpeed != null ? #numbers.formatDecimal(realtime.windSpeed, 1, 1) + 'km/h' : '--'}">10km/h</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-light border-0 rounded-3">
+                                    <div class="card-body text-center p-3">
+                                        <i class="bi bi-barometer text-warning fs-4"></i>
+                                        <small class="text-muted d-block mt-1">气压</small>
+                                        <strong th:text="${realtime.pressure != null ? realtime.pressure + 'hPa' : '--'}">1013hPa</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-light border-0 rounded-3">
+                                    <div class="card-body text-center p-3">
+                                        <i class="bi bi-eye-fill text-secondary fs-4"></i>
+                                        <small class="text-muted d-block mt-1">能见度</small>
+                                        <strong th:text="${realtime.visibility != null ? #numbers.formatDecimal(realtime.visibility, 1, 1) + 'km' : '--'}">10km</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-light border-0 rounded-3">
+                                    <div class="card-body text-center p-3">
+                                        <i class="bi bi-thermometer-high text-danger fs-4"></i>
+                                        <small class="text-muted d-block mt-1">最高温度</small>
+                                        <strong th:text="${realtime.tempMax != null ? #numbers.formatDecimal(realtime.tempMax, 1, 0) + '°C' : '--'}">30°C</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-light border-0 rounded-3">
+                                    <div class="card-body text-center p-3">
+                                        <i class="bi bi-thermometer-low text-info fs-4"></i>
+                                        <small class="text-muted d-block mt-1">最低温度</small>
+                                        <strong th:text="${realtime.tempMin != null ? #numbers.formatDecimal(realtime.tempMin, 1, 0) + '°C' : '--'}">18°C</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-light border-0 rounded-3">
+                                    <div class="card-body text-center p-3">
+                                        <i class="bi bi-cloud-rain-fill text-primary fs-4"></i>
+                                        <small class="text-muted d-block mt-1">降水量</small>
+                                        <strong th:text="${realtime.precip != null ? #numbers.formatDecimal(realtime.precip, 1, 1) + 'mm' : '0mm'}">0mm</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-light border-0 rounded-3">
+                                    <div class="card-body text-center p-3">
+                                        <i class="bi bi-sun text-warning fs-4"></i>
+                                        <small class="text-muted d-block mt-1">紫外线指数</small>
+                                        <strong th:text="${realtime.uvIndex != null ? realtime.uvIndex : '--'}">5</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7天预报 -->
+            <div class="col-lg-6 mb-3">
+                <div class="card border-0 shadow-lg rounded-4 h-100">
+                    <div class="card-header bg-info text-white rounded-top-4">
+                        <h5 class="mb-0"><i class="bi bi-calendar-week me-2"></i>7天天气预报</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>日期</th>
+                                        <th>天气</th>
+                                        <th>最高温</th>
+                                        <th>最低温</th>
+                                        <th>风向</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="day, iter : ${forecast}"
+                                        th:classappend="${iter.index == 0 ? 'table-primary' : ''}">
+                                        <td>
+                                            <strong th:if="${iter.index == 0}">今天</strong>
+                                            <span th:if="${iter.index != 0}" th:text="${#temporals.format(day.weatherDate, 'MM/dd EEE')}">01/02 周四</span>
+                                        </td>
+                                        <td th:text="${day.weatherText}">晴</td>
+                                        <td>
+                                            <span class="text-danger fw-bold"
+                                                  th:text="${day.tempMax != null ? #numbers.formatDecimal(day.tempMax, 1, 0) + '°' : '--'}">30°</span>
+                                        </td>
+                                        <td>
+                                            <span class="text-info fw-bold"
+                                                  th:text="${day.tempMin != null ? #numbers.formatDecimal(day.tempMin, 1, 0) + '°' : '--'}">18°</span>
+                                        </td>
+                                        <td th:text="${day.windDir}">北风</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aether 城市卡网格（响应式 auto-fill · 7 套场景） -->
+        <div class="mb-4">
+            <h2 class="aether-section-title">Skies &amp; Cities</h2>
+            <p class="aether-section-sub">手绘天空 · 城市天气</p>
+            <p class="aether-section-tag mb-3">
+                数据源自和风天气 (QWeather) · 每个城市卡片都对应一套独立动态场景
+            </p>
+            <div class="aether-grid" id="cityGrid"></div>
+            <footer class="text-center mt-4">
+                <small class="text-muted">
+                    数据每 30 分钟更新一次 · 点击卡片查看完整详情
+                    · <a th:href="@{/weather/aether}" class="text-decoration-none">展开完整城市库 →</a>
+                </small>
+            </footer>
+        </div>
+
+        <!-- 无数据提示 -->
+        <div th:if="${realtime == null and weatherError == null and cityCardsJson == null}" class="text-center py-5">
+            <i class="bi bi-cloud-sun text-muted" style="font-size: 4rem;"></i>
+            <h4 class="text-muted mt-3">暂无天气数据</h4>
+            <p class="text-muted">请稍后重试或返回首页搜索其他城市</p>
+            <a th:href="@{/}" class="btn btn-primary rounded-pill">
+                <i class="bi bi-house-door me-1"></i>返回首页
+            </a>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <div th:replace="fragments :: footer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/main.js}"></script>
+    <script th:src="@{/js/aether-card.js}"></script>
+    <script th:inline="javascript">
+        (function() {
+            var rawJson = /*[[${cityCardsJson}]]*/ '[]';
+            AetherCard.render(document.getElementById('cityGrid'), rawJson);
+        })();
+    </script>
+    <script>
+        function toggleFavorite(isAdd, btn) {
+            var city = btn.getAttribute('data-city');
+            var cityCode = btn.getAttribute('data-city-code');
+            if (isAdd) {
+                fetch('/api/favorite/add', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'city=' + encodeURIComponent(city) + '&cityCode=' + encodeURIComponent(cityCode)
+                })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.code === 200) {
+                        btn.className = 'btn btn-warning btn-sm rounded-pill';
+                        btn.innerHTML = '<i class="bi bi-star-fill me-1"></i>已收藏';
+                        btn.onclick = function() { toggleFavorite(false, btn); };
+                    } else {
+                        alert(data.msg);
+                    }
+                });
+            } else {
+                fetch('/api/favorite/list')
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.code === 200 && data.data) {
+                        var fav = data.data.find(function(f) { return f.cityCode === cityCode; });
+                        if (fav) {
+                            return fetch('/api/favorite/remove', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                                body: 'favoriteId=' + fav.id
+                            });
+                        }
+                    }
+                })
+                .then(function(res) { return res ? res.json() : null; })
+                .then(function(data) {
+                    if (data && data.code === 200) {
+                        btn.className = 'btn btn-outline-warning btn-sm rounded-pill';
+                        btn.innerHTML = '<i class="bi bi-star me-1"></i>收藏';
+                        btn.onclick = function() { toggleFavorite(true, btn); };
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
