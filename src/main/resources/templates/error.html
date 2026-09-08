@@ -2,18 +2,22 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${(status != null ? status + ' - ' : '') + '出错了 - 智能天气预报系统'}">500 - 出错了 - 智能天气预报系统</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${(status != null ? status : 500) + ' - 出错了 - 智能天气预报系统'}">500 - 出错了 - 智能天气预报系统</title>
     <link th:href="@{/css/style.css}" rel="stylesheet">
 </head>
 <body class="bg-light">
     <div th:replace="fragments :: navbar"></div>
-    <div class="container">
-        <div class="error-page">
-            <div class="code" th:text="${status}">500</div>
-            <h2>页面遇到问题</h2>
-            <p class="error-msg" th:text="${errorMsg}">请稍后再试</p>
-            <p class="path" th:if="${path}" th:text="${path}"></p>
+    <div class="container py-5">
+        <div class="text-center mb-4">
+            <div class="display-1 fw-bold text-secondary" th:text="${status != null ? status : 500}">500</div>
+            <h2 class="mb-3">页面遇到问题</h2>
+            <p class="text-muted" th:text="${errorMsg != null ? errorMsg : '请稍后再试'}">请稍后再试</p>
+            <p class="text-muted small" th:if="${path}" th:text="${path}"></p>
+        </div>
+        <div class="text-center">
             <a th:href="@{/}" class="btn btn-primary">返回首页</a>
+            <a th:href="@{/weather/warning}" class="btn btn-outline-secondary ms-2">预警页</a>
         </div>
     </div>
     <div th:replace="fragments :: footer"></div>
