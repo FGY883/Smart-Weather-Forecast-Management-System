@@ -4,146 +4,370 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>个人中心</title>
-    <link rel="stylesheet" th:href="@{/css/bootstrap-icons.css}">
+    <title>个人中心 - 智能天气预报系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link th:href="@{/css/style.css}" rel="stylesheet">
-    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
 </head>
-<body>
-<div th:replace="fragments :: navbar"></div>
-
-<main class="container mt-3">
-
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h3 class="mb-0"><i class="bi bi-person-circle text-soft"></i> 个人中心</h3>
-        <a th:href="@{/}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> 返回</a>
+<body class="bg-light">
+    <!-- Aether 背景云朵漂移装饰 -->
+    <div class="skydeco" aria-hidden="true">
+        <div class="drift">☁</div>
+        <div class="drift">☁</div>
+        <div class="drift">☁</div>
     </div>
 
-    <div th:if="${successMsg}" class="alert-row alert-row--blue mb-3">
-        <i class="bi bi-check-circle"></i>
-        <div class="alert-row__body" th:text="${successMsg}">成功</div>
-    </div>
-    <div th:if="${errorMsg}" class="alert-row alert-row--red mb-3">
-        <i class="bi bi-exclamation-circle"></i>
-        <div class="alert-row__body" th:text="${errorMsg}">错误</div>
-    </div>
+    <!-- 导航栏 -->
+    <div th:replace="fragments :: navbar"></div>
 
-    <div class="profile-grid">
-        <div>
-            <div class="data-card">
-                <div class="profile-info">
-                    <div class="profile-avatar" th:text="${user.nickname != null and !user.nickname.isEmpty() ? user.nickname.substring(0, 1) : 'U'}">U</div>
-                    <h3 th:text="${user.nickname != null and !user.nickname.isEmpty() ? user.nickname : user.username}">昵称</h3>
-                    <div class="text-muted small" th:text="${user.username}">username</div>
-                    <hr style="margin: 12px 0; border: 0; border-top: 1px solid var(--line);">
-                    <div class="text-soft small text-left" th:if="${user.email != null and !user.email.isEmpty()}">
-                        <i class="bi bi-envelope"></i> <span th:text="${user.email}">email</span>
+    <div class="container mt-4">
+        <!-- 页面标题 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>
+                <i class="bi bi-person-circle text-primary me-2"></i>个人中心
+            </h3>
+            <a th:href="@{/}" class="btn btn-outline-secondary btn-sm rounded-pill">
+                <i class="bi bi-arrow-left me-1"></i>返回首页
+            </a>
+        </div>
+
+        <!-- 成功/错误消息 -->
+        <div th:if="${successMsg}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-1"></i>
+            <span th:text="${successMsg}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMsg}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle me-1"></i>
+            <span th:text="${errorMsg}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="row g-4">
+            <!-- 左侧：用户头像和基本信息 -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-lg rounded-4 mb-4">
+                    <div class="card-body text-center p-5">
+                        <!-- 头像 -->
+                        <div class="mb-3">
+                            <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle"
+                                 style="width: 100px; height: 100px; font-size: 2.5rem;">
+                                <span th:text="${user.nickname != null and !user.nickname.isEmpty() ? user.nickname.substring(0, 1) : 'U'}">U</span>
+                            </div>
+                        </div>
+                        <!-- 用户信息 -->
+                        <h4 class="mb-1" th:text="${user.nickname != null and !user.nickname.isEmpty() ? user.nickname : user.username}">用户昵称</h4>
+                        <p class="text-muted mb-2">
+                            <i class="bi bi-person me-1"></i>
+                            <span th:text="${user.username}">username</span>
+                        </p>
+                        <p class="text-muted mb-2" th:if="${user.email != null and !user.email.isEmpty()}">
+                            <i class="bi bi-envelope me-1"></i>
+                            <span th:text="${user.email}">email@example.com</span>
+                        </p>
+                        <p class="text-muted mb-2" th:if="${user.phone != null and !user.phone.isEmpty()}">
+                            <i class="bi bi-phone me-1"></i>
+                            <span th:text="${user.phone}">13800138000</span>
+                        </p>
+                        <p class="text-muted mb-2" th:if="${user.city != null and !user.city.isEmpty()}">
+                            <i class="bi bi-geo-alt me-1"></i>
+                            默认城市：<span th:text="${user.city}">北京</span>
+                        </p>
+                        <p class="mb-0">
+                            <span class="badge rounded-pill"
+                                  th:classappend="${user.pushEnabled != null and user.pushEnabled ? 'bg-success' : 'bg-secondary'}"
+                                  th:text="${user.pushEnabled != null and user.pushEnabled ? '推送已开启' : '推送已关闭'}">
+                                推送状态
+                            </span>
+                        </p>
                     </div>
-                    <div class="text-soft small" th:if="${user.phone != null and !user.phone.isEmpty()}" style="margin-top:4px;">
-                        <i class="bi bi-phone"></i> <span th:text="${user.phone}">phone</span>
+                </div>
+            </div>
+
+            <!-- 右侧：编辑表单和列表 -->
+            <div class="col-lg-8">
+                <!-- 个人信息编辑 -->
+                <div class="card border-0 shadow-lg rounded-4 mb-4">
+                    <div class="card-header bg-primary text-white rounded-top-4">
+                        <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>个人信息</h5>
                     </div>
-                    <div class="text-soft small" th:if="${user.city != null and !user.city.isEmpty()}" style="margin-top:4px;">
-                        <i class="bi bi-geo-alt"></i> <span th:text="${user.city}">city</span>
+                    <div class="card-body p-4">
+                        <form th:action="@{/user/profile}" method="post">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="nickname" class="form-label">昵称</label>
+                                    <input type="text" class="form-control" id="nickname" name="nickname"
+                                           th:value="${user.nickname}" placeholder="请输入昵称">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label">邮箱</label>
+                                    <input type="email" class="form-control" id="email" name="email"
+                                           th:value="${user.email}" placeholder="请输入邮箱">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="phone" class="form-label">手机号</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone"
+                                           th:value="${user.phone}" placeholder="请输入手机号">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="city" class="form-label">默认城市</label>
+                                    <input type="text" class="form-control" id="city" name="city"
+                                           th:value="${user.city}" placeholder="请输入默认城市">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="cityCode" class="form-label">城市编码</label>
+                                    <input type="text" class="form-control" id="cityCode" name="cityCode"
+                                           th:value="${user.cityCode}" placeholder="如：101010100">
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="pushEnabled"
+                                               name="pushEnabled" value="true"
+                                               th:checked="${user.pushEnabled != null and user.pushEnabled}">
+                                        <label class="form-check-label" for="pushEnabled">
+                                            <i class="bi bi-bell me-1"></i>开启天气推送通知
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-primary rounded-pill px-4">
+                                    <i class="bi bi-check-lg me-1"></i>保存修改
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                    <div class="mt-3">
-                        <span th:class="${user.pushEnabled != null and user.pushEnabled ? 'badge badge--active' : 'badge badge--closed'}"
-                              th:text="${user.pushEnabled != null and user.pushEnabled ? '推送已开启' : '推送已关闭'}">推送</span>
+                </div>
+
+                <!-- 修改密码 -->
+                <div class="card border-0 shadow-lg rounded-4 mb-4">
+                    <div class="card-header bg-warning text-dark rounded-top-4">
+                        <h5 class="mb-0"><i class="bi bi-shield-lock me-2"></i>修改密码</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form th:action="@{/user/password}" method="post">
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label for="oldPassword" class="form-label">原密码</label>
+                                    <input type="password" class="form-control" id="oldPassword"
+                                           name="oldPassword" placeholder="请输入原密码" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="newPassword" class="form-label">新密码</label>
+                                    <input type="password" class="form-control" id="newPassword"
+                                           name="newPassword" placeholder="请输入新密码（至少6位）" required minlength="6">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="confirmPassword" class="form-label">确认新密码</label>
+                                    <input type="password" class="form-control" id="confirmPassword"
+                                           name="confirmPassword" placeholder="请再次输入新密码" required minlength="6">
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-warning rounded-pill px-4">
+                                    <i class="bi bi-key me-1"></i>修改密码
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 我的收藏 -->
+                <div class="card border-0 shadow-lg rounded-4 mb-4">
+                    <div class="card-header bg-info text-white rounded-top-4 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-star me-2"></i>我的收藏</h5>
+                        <button class="btn btn-sm btn-outline-light rounded-pill" onclick="loadFavorites()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>刷新
+                        </button>
+                    </div>
+                    <div class="card-body p-4">
+                        <div id="favoritesLoading" class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                        </div>
+                        <div id="favoritesEmpty" class="text-center py-3 d-none">
+                            <i class="bi bi-star text-muted fs-1"></i>
+                            <p class="text-muted mt-2">暂无收藏的城市</p>
+                            <a th:href="@{/}" class="btn btn-outline-primary btn-sm rounded-pill">
+                                <i class="bi bi-search me-1"></i>去搜索收藏城市
+                            </a>
+                        </div>
+                        <div id="favoritesList" class="d-none">
+                            <div class="list-group list-group-flush" id="favoritesContainer">
+                                <!-- 动态填充 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 推送记录 -->
+                <div class="card border-0 shadow-lg rounded-4 mb-4">
+                    <div class="card-header bg-secondary text-white rounded-top-4 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-bell me-2"></i>推送记录</h5>
+                        <button class="btn btn-sm btn-outline-light rounded-pill" onclick="loadPushRecords()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>刷新
+                        </button>
+                    </div>
+                    <div class="card-body p-4">
+                        <div id="pushLoading" class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                        </div>
+                        <div id="pushEmpty" class="text-center py-3 d-none">
+                            <i class="bi bi-bell-slash text-muted fs-1"></i>
+                            <p class="text-muted mt-2">暂无推送记录</p>
+                        </div>
+                        <div id="pushList" class="d-none">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>推送类型</th>
+                                            <th>推送内容</th>
+                                            <th>状态</th>
+                                            <th>推送时间</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pushContainer">
+                                        <!-- 动态填充 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div>
-            <div class="data-card">
-                <div class="data-card-header"><h4><i class="bi bi-pencil-square icon"></i>个人信息</h4></div>
-                <form th:action="@{/user/profile}" method="post">
-                    <div class="row">
-                        <div class="col-12 col-md-6 mb-3">
-                            <label class="form-label">昵称</label>
-                            <input class="form-control" type="text" name="nickname" th:value="${user.nickname}">
-                        </div>
-                        <div class="col-12 col-md-6 mb-3">
-                            <label class="form-label">邮箱</label>
-                            <input class="form-control" type="email" name="email" th:value="${user.email}">
-                        </div>
-                        <div class="col-12 col-md-6 mb-3">
-                            <label class="form-label">手机号</label>
-                            <input class="form-control" type="tel" name="phone" th:value="${user.phone}">
-                        </div>
-                        <div class="col-12 col-md-6 mb-3">
-                            <label class="form-label">默认城市</label>
-                            <input class="form-control" type="text" name="city" th:value="${user.city}">
-                        </div>
-                        <div class="col-12 col-md-6 mb-3">
-                            <label class="form-label">城市编码</label>
-                            <input class="form-control" type="text" name="cityCode" th:value="${user.cityCode}" placeholder="如 101010100">
-                        </div>
-                        <div class="col-12 col-md-6 mb-3 d-flex align-items-end">
-                            <label class="form-check">
-                                <input class="form-check-input" type="checkbox" name="pushEnabled" value="true" th:checked="${user.pushEnabled != null and user.pushEnabled}">
-                                <span>开启每日天气推送</span>
-                            </label>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg"></i> 保存</button>
-                </form>
-            </div>
-
-            <div class="data-card">
-                <div class="data-card-header"><h4><i class="bi bi-shield-lock icon"></i>修改密码</h4></div>
-                <form th:action="@{/user/password}" method="post">
-                    <div class="row">
-                        <div class="col-12 mb-3">
-                            <label class="form-label">原密码</label>
-                            <input class="form-control" type="password" name="oldPassword" required>
-                        </div>
-                        <div class="col-12 col-md-6 mb-3">
-                            <label class="form-label">新密码（≥ 6 位）</label>
-                            <input class="form-control" type="password" name="newPassword" minlength="6" required>
-                        </div>
-                        <div class="col-12 col-md-6 mb-3">
-                            <label class="form-label">确认新密码</label>
-                            <input class="form-control" type="password" name="confirmPassword" minlength="6" required>
-                        </div>
-                    </div>
-                    <button class="btn btn-warning" type="submit"><i class="bi bi-key"></i> 修改密码</button>
-                </form>
-            </div>
-
-            <div class="data-card">
-                <div class="data-card-header">
-                    <h4><i class="bi bi-star icon"></i>我的收藏</h4>
-                    <button class="btn btn-sm btn-outline-secondary" data-reload-fav>刷新</button>
-                </div>
-                <div id="favoritesList"></div>
-            </div>
-
-            <div class="data-card">
-                <div class="data-card-header">
-                    <h4><i class="bi bi-bell icon"></i>推送记录</h4>
-                    <button class="btn btn-sm btn-outline-secondary" data-reload-push>刷新</button>
-                </div>
-                <div id="pushList"></div>
-            </div>
-        </div>
     </div>
-</main>
 
-<div th:replace="fragments :: footer"></div>
-<script th:src="@{/js/main.js}"></script>
-<script>
-    (function () {
-        var favBox = document.getElementById('favoritesList');
-        var pushBox = document.getElementById('pushList');
+    <!-- 页脚 -->
+    <div th:replace="fragments :: footer"></div>
 
-        WeatherApp.loadFavoritesInto(favBox);
-        WeatherApp.loadPushInto(pushBox);
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/main.js}"></script>
+    <script>
+        // 页面加载时获取收藏和推送记录
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFavorites();
+            loadPushRecords();
+        });
 
-        var reloadFav = document.querySelector('[data-reload-fav]');
-        if (reloadFav) reloadFav.addEventListener('click', function () { WeatherApp.loadFavoritesInto(favBox); });
-        var reloadPush = document.querySelector('[data-reload-push]');
-        if (reloadPush) reloadPush.addEventListener('click', function () { WeatherApp.loadPushInto(pushBox); });
-    })();
-</script>
+        // 加载收藏列表
+        function loadFavorites() {
+            var loading = document.getElementById('favoritesLoading');
+            var empty = document.getElementById('favoritesEmpty');
+            var list = document.getElementById('favoritesList');
+            var container = document.getElementById('favoritesContainer');
+
+            loading.classList.remove('d-none');
+            empty.classList.add('d-none');
+            list.classList.add('d-none');
+
+            fetch('/api/favorite/list')
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                loading.classList.add('d-none');
+                if (data.code === 200 && data.data && data.data.length > 0) {
+                    list.classList.remove('d-none');
+                    container.innerHTML = '';
+                    data.data.forEach(function(fav) {
+                        var item = document.createElement('div');
+                        item.className = 'list-group-item d-flex justify-content-between align-items-center border-0 border-bottom px-0';
+                        item.innerHTML =
+                            '<div>' +
+                                '<i class="bi bi-geo-alt text-primary me-2"></i>' +
+                                '<strong>' + escapeHtml(fav.city) + '</strong>' +
+                                '<small class="text-muted ms-2">(' + escapeHtml(fav.cityCode) + ')</small>' +
+                                (fav.remark ? '<small class="text-muted ms-2">- ' + escapeHtml(fav.remark) + '</small>' : '') +
+                            '</div>' +
+                            '<div>' +
+                                '<a href="/weather/detail/' + encodeURIComponent(fav.cityCode) + '?cityName=' + encodeURIComponent(fav.city) + '" class="btn btn-sm btn-outline-primary rounded-pill me-1">' +
+                                    '<i class="bi bi-cloud-sun me-1"></i>查看天气' +
+                                '</a>' +
+                                '<button class="btn btn-sm btn-outline-danger rounded-pill" onclick="removeFavorite(' + fav.id + ', this)">' +
+                                    '<i class="bi bi-trash"></i>' +
+                                '</button>' +
+                            '</div>';
+                        container.appendChild(item);
+                    });
+                } else {
+                    empty.classList.remove('d-none');
+                }
+            })
+            .catch(function() {
+                loading.classList.add('d-none');
+                empty.classList.remove('d-none');
+            });
+        }
+
+        // 取消收藏
+        function removeFavorite(favoriteId, btn) {
+            if (!confirm('确定要取消收藏吗？')) return;
+            fetch('/api/favorite/remove', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'favoriteId=' + favoriteId
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.code === 200) {
+                    loadFavorites();
+                } else {
+                    alert(data.msg || '取消收藏失败');
+                }
+            });
+        }
+
+        // 加载推送记录
+        function loadPushRecords() {
+            var loading = document.getElementById('pushLoading');
+            var empty = document.getElementById('pushEmpty');
+            var list = document.getElementById('pushList');
+            var container = document.getElementById('pushContainer');
+
+            loading.classList.remove('d-none');
+            empty.classList.add('d-none');
+            list.classList.add('d-none');
+
+            fetch('/api/push/records')
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                loading.classList.add('d-none');
+                if (data.code === 200 && data.data && data.data.length > 0) {
+                    list.classList.remove('d-none');
+                    container.innerHTML = '';
+                    data.data.forEach(function(record) {
+                        var tr = document.createElement('tr');
+                        var statusBadge = record.pushStatus === 1
+                            ? '<span class="badge bg-success">发送成功</span>'
+                            : '<span class="badge bg-danger">发送失败</span>';
+                        var pushTime = record.pushTime || record.createTime || '--';
+                        tr.innerHTML =
+                            '<td><span class="badge bg-info text-dark">' + escapeHtml(record.pushType || '--') + '</span></td>' +
+                            '<td class="text-truncate" style="max-width: 300px;" title="' + escapeHtml(record.pushContent || '') + '">' + escapeHtml(record.pushContent || '--') + '</td>' +
+                            '<td>' + statusBadge + '</td>' +
+                            '<td class="text-nowrap">' + escapeHtml(pushTime) + '</td>';
+                        container.appendChild(tr);
+                    });
+                } else {
+                    empty.classList.remove('d-none');
+                }
+            })
+            .catch(function() {
+                loading.classList.add('d-none');
+                empty.classList.remove('d-none');
+            });
+        }
+
+        // HTML转义
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(text));
+            return div.innerHTML;
+        }
+    </script>
 </body>
 </html>

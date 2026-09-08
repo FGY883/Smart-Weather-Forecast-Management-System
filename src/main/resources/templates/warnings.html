@@ -4,69 +4,375 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>天气预警</title>
-    <link rel="stylesheet" th:href="@{/css/bootstrap-icons.css}">
+    <title>天气预警 - 智能天气预报系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link th:href="@{/css/style.css}" rel="stylesheet">
-    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
 </head>
-<body>
-<div th:replace="fragments :: navbar"></div>
-
-<main class="container mt-3">
-
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h3 class="mb-0"><i class="bi bi-exclamation-triangle text-soft"></i> 天气预警</h3>
-        <a th:href="@{/}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> 返回</a>
+<body class="bg-light">
+    <!-- Aether 背景云朵漂移装饰 -->
+    <div class="skydeco" aria-hidden="true">
+        <div class="drift">☁</div>
+        <div class="drift">☁</div>
+        <div class="drift">☁</div>
     </div>
 
-    <form th:action="@{/weather/warning/search}" method="get" class="search-bar mb-3">
-        <input class="form-control" type="text" name="city" placeholder="搜索城市" th:value="${searchCity}" required>
-        <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> 查询</button>
-    </form>
+    <!-- 导航栏 -->
+    <div th:replace="fragments :: navbar"></div>
 
-    <div th:if="${searchError}" class="alert-row alert-row--yellow mb-3">
-        <i class="bi bi-exclamation-triangle"></i>
-        <div class="alert-row__body" th:text="${searchError}">未找到城市</div>
-    </div>
+    <div class="container mt-4">
+        <!-- 页面标题 -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <h3>
+                <i class="bi bi-exclamation-triangle text-warning me-2"></i>天气预警信息
+            </h3>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+                    <i class="bi bi-cloud me-1"></i>和风天气
+                </span>
+                <a th:href="@{/}" class="btn btn-outline-secondary btn-sm rounded-pill">
+                    <i class="bi bi-arrow-left me-1"></i>返回首页
+                </a>
+            </div>
+        </div>
 
-    <div th:if="${searchCity}" class="alert-row alert-row--blue mb-3">
-        <i class="bi bi-geo-alt"></i>
-        <div class="alert-row__body">当前显示 <strong th:text="${searchCity}">北京</strong> 的预警信息</div>
-        <a class="btn btn-sm btn-outline-primary" th:href="@{/weather/warning}">查看全部</a>
-    </div>
+        <!-- 城市搜索 -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-8">
+                <form th:action="@{/weather/warning/search}" method="get" class="input-group input-group-lg shadow-sm rounded-3 overflow-hidden">
+                    <span class="input-group-text bg-white border-0">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input type="text" class="form-control border-0 py-3" name="city"
+                           placeholder="输入城市名称查看预警，如：北京、上海、深圳..." required
+                           th:value="${searchCity}">
+                    <button class="btn btn-warning px-4" type="submit">
+                        <i class="bi bi-exclamation-triangle me-1"></i>查询预警
+                    </button>
+                </form>
+            </div>
+        </div>
 
-    <div th:if="${warnings != null and !warnings.isEmpty()}" class="row">
-        <div th:each="w : ${warnings}" class="col-12 col-lg-6">
-            <div th:class="'alert-row alert-row--' + ${w.warningLevel == null ? 'yellow' : #strings.toLowerCase(w.warningLevel)}" style="display:block;padding:16px;">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <div>
-                        <span th:class="'badge badge--' + ${w.warningLevel == null ? 'yellow' : #strings.toLowerCase(w.warningLevel)}"
-                              th:text="${w.warningLevel}">等级</span>
-                        <span class="badge" th:text="${w.warningType}">类型</span>
-                    </div>
-                    <small class="text-muted text-nowrap" th:text="${#temporals.format(w.startTime, 'MM-dd HH:mm')}">时间</small>
+        <!-- 搜索结果提示 -->
+        <div th:if="${searchCity}" class="row justify-content-center mb-3">
+            <div class="col-lg-8">
+                <div class="alert alert-info d-flex align-items-center rounded-3" role="alert">
+                    <i class="bi bi-geo-alt me-2"></i>
+                    <span>当前显示 <strong th:text="${searchCity}">北京</strong> 的预警信息</span>
+                    <a th:href="@{/weather/warning}" class="btn btn-sm btn-outline-info ms-auto rounded-pill">
+                        <i class="bi bi-list me-1"></i>查看全部
+                    </a>
                 </div>
-                <div class="alert-row__title" th:text="${w.warningTitle}">标题</div>
-                <div class="alert-row__content" th:text="${w.warningContent}">内容</div>
-                <div class="mt-2 d-flex flex-wrap gap-3 small text-muted">
-                    <span><i class="bi bi-geo-alt"></i> <span th:text="${w.city}">城市</span></span>
-                    <span th:if="${w.endTime != null}"><i class="bi bi-clock"></i> 截止 <span th:text="${#temporals.format(w.endTime, 'MM-dd HH:mm')}">时间</span></span>
-                    <span><span th:class="${w.status == 1 ? 'badge badge--active' : 'badge badge--closed'}" th:text="${w.status == 1 ? '生效中' : '已解除'}">状态</span></span>
+            </div>
+        </div>
+
+        <!-- 错误消息 -->
+        <div th:if="${searchError}" class="row justify-content-center mb-3">
+            <div class="col-lg-8">
+                <div class="alert alert-warning alert-dismissible fade show rounded-3" role="alert">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    <span th:text="${searchError}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 预警类型说明 -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm rounded-3 text-center bg-danger bg-opacity-10">
+                    <div class="card-body p-3">
+                        <i class="bi bi-thermometer-high text-danger fs-3"></i>
+                        <h6 class="mt-2 mb-0 text-danger">高温预警</h6>
+                        <small class="text-muted">≥33℃</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm rounded-3 text-center bg-primary bg-opacity-10">
+                    <div class="card-body p-3">
+                        <i class="bi bi-snow text-primary fs-3"></i>
+                        <h6 class="mt-2 mb-0 text-primary">寒潮预警</h6>
+                        <small class="text-muted">≤0℃</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm rounded-3 text-center bg-info bg-opacity-10">
+                    <div class="card-body p-3">
+                        <i class="bi bi-cloud-rain-heavy text-info fs-3"></i>
+                        <h6 class="mt-2 mb-0 text-info">暴雨预警</h6>
+                        <small class="text-muted">≥30mm</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm rounded-3 text-center bg-warning bg-opacity-10">
+                    <div class="card-body p-3">
+                        <i class="bi bi-wind text-warning fs-3"></i>
+                        <h6 class="mt-2 mb-0 text-warning">大风预警</h6>
+                        <small class="text-muted">≥8级</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 预警统计 -->
+        <div th:if="${warnings != null and !warnings.isEmpty()}" class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm rounded-3 text-center">
+                    <div class="card-body p-3">
+                        <h3 class="text-danger mb-1"
+                            th:text="${#lists.size(warnings.stream().filter(w -> w.warningLevel == 'RED').toList())}">0</h3>
+                        <small class="text-muted">红色预警</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm rounded-3 text-center">
+                    <div class="card-body p-3">
+                        <h3 class="text-warning mb-1"
+                            th:text="${#lists.size(warnings.stream().filter(w -> w.warningLevel == 'ORANGE').toList())}">0</h3>
+                        <small class="text-muted">橙色预警</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm rounded-3 text-center">
+                    <div class="card-body p-3">
+                        <h3 class="text-info mb-1"
+                            th:text="${#lists.size(warnings.stream().filter(w -> w.warningLevel == 'YELLOW').toList())}">0</h3>
+                        <small class="text-muted">黄色预警</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm rounded-3 text-center">
+                    <div class="card-body p-3">
+                        <h3 class="text-primary mb-1"
+                            th:text="${#lists.size(warnings.stream().filter(w -> w.warningLevel == 'BLUE').toList())}">0</h3>
+                        <small class="text-muted">蓝色预警</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 预警列表 -->
+        <div th:if="${warnings != null and !warnings.isEmpty()}" class="row g-3">
+            <div th:each="warning : ${warnings}" class="col-lg-6">
+                <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+                    <!-- 预警等级色条 -->
+                    <div class="rounded-top-4"
+                         th:classappend="${warning.warningLevel == 'RED' ? 'bg-danger' : (warning.warningLevel == 'ORANGE' ? 'bg-warning' : (warning.warningLevel == 'YELLOW' ? 'bg-info' : 'bg-primary'))}"
+                         style="height: 5px;"></div>
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <!-- 预警等级标签 -->
+                                <span class="badge me-2 fs-6"
+                                      th:classappend="${warning.warningLevel == 'RED' ? 'bg-danger' : (warning.warningLevel == 'ORANGE' ? 'bg-warning text-dark' : (warning.warningLevel == 'YELLOW' ? 'bg-info text-dark' : 'bg-primary'))}"
+                                      th:text="${warning.warningLevel == 'RED' ? '红色预警' : (warning.warningLevel == 'ORANGE' ? '橙色预警' : (warning.warningLevel == 'YELLOW' ? '黄色预警' : '蓝色预警'))}">
+                                    红色预警
+                                </span>
+                                <!-- 预警类型图标 -->
+                                <span class="badge bg-secondary">
+                                    <i th:class="${warning.warningType == 'HIGH_TEMP' ? 'bi bi-thermometer-high' : (warning.warningType == 'COLD_WAVE' ? 'bi bi-snow' : (warning.warningType == 'HEAVY_RAIN' ? 'bi bi-cloud-rain-heavy' : 'bi bi-wind'))}"></i>
+                                    <span th:text="${warning.warningType == 'HIGH_TEMP' ? '高温' : (warning.warningType == 'COLD_WAVE' ? '寒潮' : (warning.warningType == 'HEAVY_RAIN' ? '暴雨' : (warning.warningType == 'STRONG_WIND' ? '大风' : warning.warningType)))}">暴雨</span>
+                                </span>
+                            </div>
+                            <small class="text-muted text-nowrap">
+                                <i class="bi bi-clock me-1"></i>
+                                <span th:text="${#temporals.format(warning.startTime, 'MM-dd HH:mm')}">01-01 08:00</span>
+                            </small>
+                        </div>
+
+                        <!-- 预警标题 -->
+                        <h5 class="card-title mb-2" th:text="${warning.warningTitle}">暴雨红色预警</h5>
+
+                        <!-- 预警内容 -->
+                        <p class="card-text text-muted mb-3" th:text="${warning.warningContent}">预警详细内容...</p>
+
+                        <!-- 预警信息 -->
+                        <div class="d-flex flex-wrap gap-3">
+                            <span class="text-muted small">
+                                <i class="bi bi-geo-alt me-1"></i>
+                                <span th:text="${warning.city}">北京</span>
+                            </span>
+                            <span class="text-muted small" th:if="${warning.endTime != null}">
+                                <i class="bi bi-clock-history me-1"></i>
+                                结束时间: <span th:text="${#temporals.format(warning.endTime, 'MM-dd HH:mm')}">01-02 08:00</span>
+                            </span>
+                            <span class="badge rounded-pill"
+                                  th:classappend="${warning.status == 1 ? 'bg-success' : 'bg-secondary'}"
+                                  th:text="${warning.status == 1 ? '生效中' : '已解除'}">
+                                生效中
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 无预警提示 -->
+        <div th:if="${warnings == null or warnings.isEmpty()}" class="text-center mb-4">
+            <div class="mb-3">
+                <i class="bi bi-shield-check text-success" style="font-size: 4rem;"></i>
+            </div>
+            <h4 class="text-success mb-2">
+                <span th:if="${searchCity}">
+                    <span th:text="${searchCity}">北京</span>当前暂无活跃预警
+                </span>
+                <span th:unless="${searchCity}">当前暂无活跃预警</span>
+            </h4>
+            <p class="text-muted">所有地区天气状况良好，请放心出行</p>
+        </div>
+
+        <!-- 预警示例展示 -->
+        <div class="mb-4">
+            <h4 class="mb-3">
+                <i class="bi bi-info-circle text-primary me-2"></i>预警类型示例
+                <span class="badge bg-secondary ms-2">示例数据</span>
+            </h4>
+            <div class="row g-3">
+                <!-- 示例1：红色高温预警 -->
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+                        <div class="bg-danger rounded-top-4" style="height: 5px;"></div>
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <span class="badge bg-danger me-2 fs-6">红色预警</span>
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-thermometer-high"></i> 高温
+                                    </span>
+                                </div>
+                                <small class="text-muted text-nowrap">
+                                    <i class="bi bi-clock me-1"></i>05-13 08:00
+                                </small>
+                            </div>
+                            <h5 class="card-title mb-2">北京市高温红色预警</h5>
+                            <p class="card-text text-muted mb-3">
+                                预计今日最高气温将达40℃以上，请注意防暑降温，减少户外活动。
+                            </p>
+                            <div class="d-flex flex-wrap gap-3">
+                                <span class="text-muted small">
+                                    <i class="bi bi-geo-alt me-1"></i>北京
+                                </span>
+                                <span class="text-muted small">
+                                    <i class="bi bi-clock-history me-1"></i>结束时间: 05-14 20:00
+                                </span>
+                                <span class="badge rounded-pill bg-success">生效中</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 示例2：橙色暴雨预警 -->
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+                        <div class="bg-warning rounded-top-4" style="height: 5px;"></div>
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <span class="badge bg-warning text-dark me-2 fs-6">橙色预警</span>
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-cloud-rain-heavy"></i> 暴雨
+                                    </span>
+                                </div>
+                                <small class="text-muted text-nowrap">
+                                    <i class="bi bi-clock me-1"></i>05-13 10:00
+                                </small>
+                            </div>
+                            <h5 class="card-title mb-2">上海市暴雨橙色预警</h5>
+                            <p class="card-text text-muted mb-3">
+                                预计未来6小时内降雨量将达50毫米以上，请注意防范城市内涝。
+                            </p>
+                            <div class="d-flex flex-wrap gap-3">
+                                <span class="text-muted small">
+                                    <i class="bi bi-geo-alt me-1"></i>上海
+                                </span>
+                                <span class="text-muted small">
+                                    <i class="bi bi-clock-history me-1"></i>结束时间: 05-13 22:00
+                                </span>
+                                <span class="badge rounded-pill bg-success">生效中</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 示例3：黄色大风预警 -->
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+                        <div class="bg-info rounded-top-4" style="height: 5px;"></div>
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <span class="badge bg-info text-dark me-2 fs-6">黄色预警</span>
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-wind"></i> 大风
+                                    </span>
+                                </div>
+                                <small class="text-muted text-nowrap">
+                                    <i class="bi bi-clock me-1"></i>05-13 06:00
+                                </small>
+                            </div>
+                            <h5 class="card-title mb-2">广州市大风黄色预警</h5>
+                            <p class="card-text text-muted mb-3">
+                                预计今日将出现8级以上大风，请注意加固临时搭建物。
+                            </p>
+                            <div class="d-flex flex-wrap gap-3">
+                                <span class="text-muted small">
+                                    <i class="bi bi-geo-alt me-1"></i>广州
+                                </span>
+                                <span class="text-muted small">
+                                    <i class="bi bi-clock-history me-1"></i>结束时间: 05-14 06:00
+                                </span>
+                                <span class="badge rounded-pill bg-success">生效中</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 示例4：蓝色寒潮预警 -->
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+                        <div class="bg-primary rounded-top-4" style="height: 5px;"></div>
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <span class="badge bg-primary me-2 fs-6">蓝色预警</span>
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-snow"></i> 寒潮
+                                    </span>
+                                </div>
+                                <small class="text-muted text-nowrap">
+                                    <i class="bi bi-clock me-1"></i>05-12 16:00
+                                </small>
+                            </div>
+                            <h5 class="card-title mb-2">哈尔滨市寒潮蓝色预警</h5>
+                            <p class="card-text text-muted mb-3">
+                                预计48小时内最低气温将下降8℃以上，请注意添衣保暖。
+                            </p>
+                            <div class="d-flex flex-wrap gap-3">
+                                <span class="text-muted small">
+                                    <i class="bi bi-geo-alt me-1"></i>哈尔滨
+                                </span>
+                                <span class="text-muted small">
+                                    <i class="bi bi-clock-history me-1"></i>结束时间: 05-14 08:00
+                                </span>
+                                <span class="badge rounded-pill bg-secondary">已解除</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div th:if="${warnings == null or warnings.isEmpty()}" class="empty-state">
-        <i class="bi bi-shield-check"></i>
-        <h4>当前暂无活跃预警</h4>
-        <p class="text-muted" th:if="${searchCity}"><span th:text="${searchCity}">北京</span> 当前无预警</p>
-        <p class="text-muted" th:unless="${searchCity}">系统未检测到任何生效预警</p>
-    </div>
+    <!-- 页脚 -->
+    <div th:replace="fragments :: footer"></div>
 
-</main>
-
-<div th:replace="fragments :: footer"></div>
-<script th:src="@{/js/main.js}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/main.js}"></script>
 </body>
 </html>
