@@ -1,118 +1,118 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" data-page-node-id="Qh82bRxnwuzqXErAnvzNnF">
+<head data-page-node-id="1eiWRBjHOSNryQmuKGicKU">
+    <meta charset="UTF-8" data-page-node-id="xDRwWs07bHdDwRSLBaPXEI">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="EvV52oerTTJphryELHy3N9">
     <title th:text="${currentCity} + ' - 7 天预报'">7 天预报</title>
-    <link rel="stylesheet" th:href="@{/css/bootstrap-icons.css}">
-    <link th:href="@{/css/style.css}" rel="stylesheet">
-    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
+    <link rel="stylesheet" th:href="@{/css/bootstrap-icons.css}" data-page-node-id="PbDaE45R75W3MP2hJjLEwd">
+    <link th:href="@{/css/style.css}" rel="stylesheet" data-page-node-id="3BDSSiG1o3cGGBlIWnIDri">
+    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}" data-page-node-id="Eka9AXKy6v4DYykTC22HLe">
 </head>
-<body>
-<div th:replace="fragments :: navbar"></div>
+<body data-page-node-id="0uUPquVDjmzQ8vjSvpgN1b">
+<div th:replace="fragments :: navbar" data-page-node-id="Bbq5VgMXgc2ETNEGcSrI2X"></div>
 
-<main class="container mt-3">
+<main class="container mt-3" data-page-node-id="V72upJX4pBbPoammeNjEPz">
 
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h3 class="mb-0">
-            <i class="bi bi-graph-up text-soft"></i>
-            <span th:text="${currentCity}">北京</span>
-            <span class="text-muted small fw-light">· 7 天预报与 AI 预测</span>
+    <div class="d-flex align-items-center justify-content-between mb-3" data-page-node-id="HUZJPiWMTkiukSpvh7ErBF">
+        <h3 class="mb-0" data-page-node-id="ERCshpQQFeYLRj8CbR8DAA">
+            <i class="bi bi-graph-up text-soft" data-page-node-id="cxXP1lNXwQdF9IGKCeGYgJ"></i>
+            <span th:text="${currentCity}" data-page-node-id="966mcy8ZtcxXe5szz1wLW7">北京</span>
+            <span class="text-muted small fw-light" data-page-node-id="esFB1sPHbDOLExjdocjexK">· 7 天预报与 AI 预测</span>
         </h3>
-        <a th:href="@{/}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> 返回</a>
+        <a th:href="@{/}" class="btn btn-sm btn-outline-secondary" data-page-node-id="S5x1Wwao6f4RGInUO9b6rF"><i class="bi bi-arrow-left" data-page-node-id="OGSCge0d7TJGg5D26oJGGK"></i> 返回</a>
     </div>
 
-    <form th:action="@{/weather/ai-forecast/search}" method="get" class="search-bar mb-3">
-        <input class="form-control" type="text" name="city" placeholder="切换城市" th:value="${currentCity}" required>
-        <button class="btn btn-primary" type="submit">查询</button>
+    <form th:action="@{/weather/ai-forecast/search}" method="get" class="search-bar mb-3" data-page-node-id="MyZ6GzQFUQICdPJwDtPPrK">
+        <input class="form-control" type="text" name="city" placeholder="切换城市" th:value="${currentCity}" required data-page-node-id="9ANTXzWLf50TZ3g9CZINTW">
+        <button class="btn btn-primary" type="submit" data-page-node-id="UOfWgPbFBQ2YDwM4NYgSg3">查询</button>
     </form>
 
-    <div th:if="${forecastError}" class="alert-row alert-row--red mb-3">
-        <i class="bi bi-exclamation-circle"></i>
-        <div class="alert-row__body" th:text="${forecastError}">错误</div>
+    <div th:if="${forecastError}" class="alert-row alert-row--red mb-3" data-page-node-id="vg9zqQ4OIN8mdBnm5UbgeG">
+        <i class="bi bi-exclamation-circle" data-page-node-id="c9ZdhSAyE1JqIgz6tnsuth"></i>
+        <div class="alert-row__body" th:text="${forecastError}" data-page-node-id="5ATpF3cFbTr9rIcoHaCI5p">错误</div>
     </div>
 
-    <div class="data-card" th:if="${forecast != null and !forecast.isEmpty()}">
-        <div class="data-card-header">
-            <h4><i class="bi bi-table icon"></i>官方 7 天预报</h4>
-            <span class="text-muted small">数据来源：和风天气 QWeather /v7/weather/7d</span>
+    <div class="data-card" th:if="${forecast != null and !forecast.isEmpty()}" data-page-node-id="4irmky36gyAcjmYUk00tng">
+        <div class="data-card-header" data-page-node-id="fnRjsM85IwRucJ2FA5Wpkv">
+            <h4 data-page-node-id="kIDdHgWEzc9C9u1w62PVdN"><i class="bi bi-table icon" data-page-node-id="2J8BP0yuVDFZnJwSHVjwr2"></i>官方 7 天预报</h4>
+            <span class="text-muted small" data-page-node-id="bYe8RVxNS2f88vBCTNoDvt">数据来源：和风天气 QWeather /v7/weather/7d</span>
         </div>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>日期</th>
-                    <th>天气</th>
-                    <th class="text-right">最高</th>
-                    <th class="text-right">最低</th>
-                    <th class="text-right">湿度</th>
-                    <th class="text-right">降水</th>
-                    <th class="text-right">风速</th>
-                    <th>风向</th>
+        <table class="data-table" data-page-node-id="dhiTOf0GDMCFBlLfhJo71t">
+            <thead data-page-node-id="wkqtMPWSP3myUoo6XWp019">
+                <tr data-page-node-id="02XLPByolDxKgacp8oDSMP">
+                    <th data-page-node-id="oBWztVLrIkiwqHvwh5ljyk">日期</th>
+                    <th data-page-node-id="MrweSEG3nB1wIJ5ZoHzE4v">天气</th>
+                    <th class="text-right" data-page-node-id="1JCg7aMuqMJK3pg9lXWag9">最高</th>
+                    <th class="text-right" data-page-node-id="c3sZ0pHKJnYs56XgR65VXv">最低</th>
+                    <th class="text-right" data-page-node-id="Wllt5Wht4Bw2VtYKRafzit">湿度</th>
+                    <th class="text-right" data-page-node-id="bB0OSo8YxGsuA7ySK8sSPo">降水</th>
+                    <th class="text-right" data-page-node-id="vlDPO8PKFApJrqN1gD6Zn7">风速</th>
+                    <th data-page-node-id="R5ddfT4p23X68l9IAuFosK">风向</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr th:each="f : ${forecast}">
-                    <td th:text="${#temporals.format(f.weatherDate, 'M/d EEE')}">1/1 周三</td>
-                    <td th:text="${f.weatherText}">晴</td>
-                    <td class="text-right text-warm" th:text="${f.tempMax != null ? #numbers.formatDecimal(f.tempMax, 1, 1) + '°C' : '--'}">28.0°C</td>
-                    <td class="text-right text-cold" th:text="${f.tempMin != null ? #numbers.formatDecimal(f.tempMin, 1, 1) + '°C' : '--'}">15.0°C</td>
-                    <td class="text-right" th:text="${f.humidity != null ? f.humidity + '%' : '--'}">60%</td>
-                    <td class="text-right" th:text="${f.precip != null ? #numbers.formatDecimal(f.precip, 1, 1) + ' mm' : '0 mm'}">0 mm</td>
-                    <td class="text-right" th:text="${f.windSpeed != null ? #numbers.formatDecimal(f.windSpeed, 1, 1) + ' km/h' : '--'}">10 km/h</td>
-                    <td class="text-muted" th:text="${f.windDir} ?: '—'">南风</td>
+            <tbody data-page-node-id="VNk900fqDHfXAzTb4e0j5f">
+                <tr th:each="f : ${forecast}" data-page-node-id="3ZnhG3qFolDNmmRUZC1EbM">
+                    <td th:text="${#temporals.format(f.weatherDate, 'M/d EEE')}" data-page-node-id="CNzfbZM7hRii2pl4cBEEHe">1/1 周三</td>
+                    <td th:text="${f.weatherText}" data-page-node-id="c6nXAoFcITJFUgqZPj93xe">晴</td>
+                    <td class="text-right text-warm" th:text="${f.tempMax != null ? #numbers.formatDecimal(f.tempMax, 1, 1) + '°C' : '--'}" data-page-node-id="WOvochCKxcmRHOuowm2hEE">28.0°C</td>
+                    <td class="text-right text-cold" th:text="${f.tempMin != null ? #numbers.formatDecimal(f.tempMin, 1, 1) + '°C' : '--'}" data-page-node-id="YarJkXsQQtY1QoaZWSq90t">15.0°C</td>
+                    <td class="text-right" th:text="${f.humidity != null ? f.humidity + '%' : '--'}" data-page-node-id="0caH1w6V9SGRtofmY4dHSm">60%</td>
+                    <td class="text-right" th:text="${f.precip != null ? #numbers.formatDecimal(f.precip, 1, 1) + ' mm' : '0 mm'}" data-page-node-id="eozABtq7GB7xoXgBOhIE90">0 mm</td>
+                    <td class="text-right" th:text="${f.windSpeed != null ? #numbers.formatDecimal(f.windSpeed, 1, 1) + ' km/h' : '--'}" data-page-node-id="iYTHwwTx3dCwFSawHNtW5C">10 km/h</td>
+                    <td class="text-muted" th:text="${f.windDir} ?: '—'" data-page-node-id="541I6HaX4kvaw8ik6c0Hwr">南风</td>
                 </tr>
             </tbody>
         </table>
     </div>
 
-    <div class="data-card mt-3" th:if="${predictions != null and !predictions.isEmpty()}">
-        <div class="data-card-header">
-            <h4><i class="bi bi-cpu icon"></i>AI 模型预测</h4>
-            <span class="text-muted small">算法：线性回归 + 加权移动平均 · 基于近 30 天历史</span>
+    <div class="data-card mt-3" th:if="${predictions != null and !predictions.isEmpty()}" data-page-node-id="0JIc0f0Z9PAkLclPmvbUsc">
+        <div class="data-card-header" data-page-node-id="PtGO6BJnsDN4nPwDm1pSN0">
+            <h4 data-page-node-id="3HU9faqpy54n9oZjuDs3Bg"><i class="bi bi-cpu icon" data-page-node-id="qyKzAxBtTHMLtW1DF8CBEZ"></i>AI 模型预测</h4>
+            <span class="text-muted small" data-page-node-id="sVgrDkKKkqkje8BNXCy0Rf">算法：线性回归 + 加权移动平均 · 基于近 30 天历史</span>
         </div>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>目标日期</th>
-                    <th>天气</th>
-                    <th class="text-right">预测最高</th>
-                    <th class="text-right">预测最低</th>
-                    <th class="text-right">湿度</th>
-                    <th class="text-right">降水</th>
-                    <th class="text-right">置信度</th>
+        <table class="data-table" data-page-node-id="e8c9rXnAtKzj1rtgiNXPrG">
+            <thead data-page-node-id="qBAXUYpQAmtNhRVWANfbH4">
+                <tr data-page-node-id="FbvWfUsMlZGBgDmEH8DtTS">
+                    <th data-page-node-id="EH6n1cyGDz9idpIrVy7GgT">目标日期</th>
+                    <th data-page-node-id="vl2A9lDeEbVgOCN0JRzzPs">天气</th>
+                    <th class="text-right" data-page-node-id="blEWMj2T2ZvGWgI4g4jtbr">预测最高</th>
+                    <th class="text-right" data-page-node-id="y4WUqH77jYtkq1gMzCaZkO">预测最低</th>
+                    <th class="text-right" data-page-node-id="OF0emCFD3GwWlsB4hXYaFh">湿度</th>
+                    <th class="text-right" data-page-node-id="CwFNxVZCteCqf5iRGEnVcp">降水</th>
+                    <th class="text-right" data-page-node-id="2NnjdKr8SEpdHsb9H1BCq6">置信度</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr th:each="p : ${predictions}">
-                    <td th:text="${#temporals.format(p.targetDate, 'M/d EEE')}">1/2 周四</td>
-                    <td th:text="${p.weatherPred}">多云</td>
-                    <td class="text-right text-warm" th:text="${p.tempMaxPred != null ? #numbers.formatDecimal(p.tempMaxPred, 1, 1) + '°C' : '--'}">28.5°C</td>
-                    <td class="text-right text-cold" th:text="${p.tempMinPred != null ? #numbers.formatDecimal(p.tempMinPred, 1, 1) + '°C' : '--'}">20.0°C</td>
-                    <td class="text-right" th:text="${p.humidityPred != null ? p.humidityPred + '%' : '--'}">60%</td>
-                    <td class="text-right" th:text="${p.precipPred != null ? #numbers.formatDecimal(p.precipPred, 1, 1) + ' mm' : '0 mm'}">0 mm</td>
-                    <td class="text-right" th:text="${p.confidence != null ? #numbers.formatDecimal(p.confidence, 1, 2) : '--'}">0.80</td>
+            <tbody data-page-node-id="Gao859hweOe9cGTSLDiZoP">
+                <tr th:each="p : ${predictions}" data-page-node-id="NoRgR043euoVGbauJuZpY5">
+                    <td th:text="${#temporals.format(p.targetDate, 'M/d EEE')}" data-page-node-id="SBZTKIYSBW1cJlW3oDwDTw">1/2 周四</td>
+                    <td th:text="${p.weatherPred}" data-page-node-id="tlzX8DjYnmHFIV2dueGNuy">多云</td>
+                    <td class="text-right text-warm" th:text="${p.tempMaxPred != null ? #numbers.formatDecimal(p.tempMaxPred, 1, 1) + '°C' : '--'}" data-page-node-id="frOreEJERTlm4B2qygxR2E">28.5°C</td>
+                    <td class="text-right text-cold" th:text="${p.tempMinPred != null ? #numbers.formatDecimal(p.tempMinPred, 1, 1) + '°C' : '--'}" data-page-node-id="hWVyXJuIdD4AihYAFghV4C">20.0°C</td>
+                    <td class="text-right" th:text="${p.humidityPred != null ? p.humidityPred + '%' : '--'}" data-page-node-id="DlyIvYuaAzwAXE8sh0DyGS">60%</td>
+                    <td class="text-right" th:text="${p.precipPred != null ? #numbers.formatDecimal(p.precipPred, 1, 1) + ' mm' : '0 mm'}" data-page-node-id="mL6km8QCbzoQxt7oCrjLh2">0 mm</td>
+                    <td class="text-right" th:text="${p.confidence != null ? #numbers.formatDecimal(p.confidence, 1, 2) : '--'}" data-page-node-id="zwXzUwkB4Uuc0YN5iuu2oC">0.80</td>
                 </tr>
             </tbody>
         </table>
     </div>
 
-    <div class="data-card mt-3" th:if="${(forecast != null and !forecast.isEmpty()) or (predictions != null and !predictions.isEmpty())}">
-        <div class="data-card-header">
-            <h4><i class="bi bi-bar-chart-steps icon"></i>趋势对比</h4>
-            <span class="text-muted small">最高温 / 最低温</span>
+    <div class="data-card mt-3" th:if="${(forecast != null and !forecast.isEmpty()) or (predictions != null and !predictions.isEmpty())}" data-page-node-id="SVZ8fQ1Wk3X4meC6ULxBJJ">
+        <div class="data-card-header" data-page-node-id="Eah8XXNNfUOgopD1Wo2eV5">
+            <h4 data-page-node-id="xYFbXIQZvCPbnznC3QIUCf"><i class="bi bi-bar-chart-steps icon" data-page-node-id="TN5Aw2ZYpaR4139WL4TcEB"></i>趋势对比</h4>
+            <span class="text-muted small" data-page-node-id="Zn2Um75yF5wvTylJsjbPlV">最高温 / 最低温</span>
         </div>
-        <div id="trendChart" class="chart-box"></div>
+        <div id="trendChart" class="chart-box" data-page-node-id="THmmClgyuhUGhyQfGvOPpy"></div>
     </div>
 
-    <div th:if="${(forecast == null or forecast.isEmpty()) and (predictions == null or predictions.isEmpty())}" class="empty-state">
-        <i class="bi bi-cloud-slash"></i>
-        <h4>暂无预报数据</h4>
+    <div th:if="${(forecast == null or forecast.isEmpty()) and (predictions == null or predictions.isEmpty())}" class="empty-state" data-page-node-id="pSXs9uUtTQvWRVxLsaHfCI">
+        <i class="bi bi-cloud-slash" data-page-node-id="METVJygx3L5hHRdvQjFlPJ"></i>
+        <h4 data-page-node-id="2g1qBuq9wjCNNSV0CLSVEU">暂无预报数据</h4>
     </div>
 
 </main>
 
-<div th:replace="fragments :: footer"></div>
+<div th:replace="fragments :: footer" data-page-node-id="WgHJWvPEE3g4o2G6CvPsyb"></div>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 <script th:src="@{/js/main.js}"></script>
 <script th:inline="javascript">

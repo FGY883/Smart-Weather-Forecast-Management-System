@@ -8,6 +8,7 @@ import com.weather.mapper.WeatherStatisticsMapper;
 import com.weather.service.WeatherDataService;
 import com.weather.service.WeatherStatisticsService;
 import com.weather.util.WeatherApiUtil;
+import com.weather.util.WeatherCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
