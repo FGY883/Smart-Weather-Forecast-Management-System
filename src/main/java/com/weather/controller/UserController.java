@@ -22,10 +22,12 @@ public class UserController {
     public String loginPage(@RequestParam(required = false) String error,
                             @RequestParam(required = false) String logout,
                             @RequestParam(required = false) String expired,
+                            @RequestParam(required = false) String locked,
                             Model model) {
         if ("true".equals(error)) model.addAttribute("errorMsg", "用户名或密码错误");
         if ("true".equals(logout)) model.addAttribute("successMsg", "已成功退出登录");
         if ("true".equals(expired)) model.addAttribute("errorMsg", "会话已过期，请重新登录");
+        if ("true".equals(locked)) model.addAttribute("errorMsg", "失败次数过多，账号已被临时锁定，请约 10 分钟后再试");
         return "login";
     }
 

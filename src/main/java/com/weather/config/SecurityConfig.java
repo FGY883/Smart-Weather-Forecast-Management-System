@@ -63,7 +63,11 @@ public class SecurityConfig {
         };
         AuthenticationFailureHandler failureHandler = (request, response, exception) -> {
             String username = request.getParameter("username");
-            if (loginAttemptService.fail(username)) {
+            // 锁定状态（含 loadUserByUsername 提前抛出的 LockedException）：不计入失败、直接提示
+            if (exception instanceof org.springframework.security.authentication.LockedException
+                    || loginAttemptService.isLocked(username)) {
+                response.sendRedirect(request.getContextPath() + "/login?locked=true");
+            } else if (loginAttemptService.fail(username)) {
                 response.sendRedirect(request.getContextPath() + "/login?locked=true");
             } else {
                 response.sendRedirect(request.getContextPath() + "/login?error=true");

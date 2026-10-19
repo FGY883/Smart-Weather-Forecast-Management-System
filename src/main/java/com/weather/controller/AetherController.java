@@ -74,7 +74,9 @@ public class AetherController {
                 .filter(c -> c != null)
                 .collect(Collectors.toList());
 
-        model.addAttribute("cardsJson", JSONObject.toJSONString(cards));
+        // 经 th:utext 原样注入 <script type="application/json">，须把 "</" 转义为 "<\/"
+        // （JSON 合法转义，JSON.parse 可无损还原），防止城市名含 </script> 破坏脚本上下文
+        model.addAttribute("cardsJson", JSONObject.toJSONString(cards).replace("</", "<\\/"));
         model.addAttribute("cityLibJson", JSONObject.toJSONString(weatherCardService.getCityList()));
         model.addAttribute("user", user);
         model.addAttribute("updatedAt", LocalDateTime.now(ZoneId.of("Asia/Shanghai")).format(TIME_FMT));

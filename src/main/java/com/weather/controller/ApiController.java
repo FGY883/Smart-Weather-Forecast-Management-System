@@ -3,6 +3,7 @@ package com.weather.controller;
 import com.weather.common.Result;
 import com.weather.entity.*;
 import com.weather.service.*;
+import com.weather.util.RateLimiter;
 import com.weather.util.UserContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,9 @@ public class ApiController {
 
     @Autowired
     private UserContext userContext;
+
+    @Autowired
+    private RateLimiter rateLimiter;
 
     @PostMapping("/favorite/add")
     public Result<?> addFavorite(@RequestParam String city, @RequestParam String cityCode) {
@@ -67,10 +71,20 @@ public class ApiController {
     @PostMapping("/prediction/generate")
     public Result<List<AiPrediction>> generatePrediction(@RequestParam String cityCode,
                                                          @RequestParam String cityName) {
+        SysUser user = userContext.currentUser();
+        if (user == null) return Result.error(401, "请先登录");
+        // 预测生成会触发多次外部历史接口，按用户限流，避免刷接口/成本型 DoS
+        if (!rateLimiter.tryAcquire("pred:" + user.getId(), 6, 60_000L)) {
+            return Result.error(429, "预测请求过于频繁，请稍后再试");
+        }
         try {
+            List<AiPrediction> existing = aiPredictionService.getLatestPrediction(cityCode);
+            if (existing != null && !existing.isEmpty()) {
+                return Result.success(existing);
+            }
             return Result.success(aiPredictionService.generatePrediction(cityCode, cityName));
         } catch (Exception e) {
-            return Result.error("AI 预测生成失败: " + e.getMessage());
+            return Result.error("AI 预测生成失败，请稍后再试");
         }
     }
 

@@ -1,0 +1,27 @@
+# 生产环境配置（--spring.profiles.active=prod 时生效，覆盖 application.yml）
+# 原则：不自动重建库表、密钥/口令一律来自环境变量、无默认值以免误用。
+spring:
+  datasource:
+    # 生产强制使用环境变量，不提供 localhost/root/123456 之类默认值
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useUnicode=true&characterEncoding=utf8&useSSL=true&serverTimezone=Asia/Shanghai
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  # 生产绝不执行 schema.sql/data.sql，避免每次启动重建并吞错
+  sql:
+    init:
+      mode: never
+  thymeleaf:
+    cache: true
+
+# 天气密钥仅从环境变量注入
+weather:
+  api:
+    key: ${WEATHER_API_KEY}
+  weathercn:
+    api-key: ${WEATHERCN_API_KEY}
+
+logging:
+  level:
+    root: warn
+    com.weather: info
