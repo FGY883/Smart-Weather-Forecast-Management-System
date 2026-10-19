@@ -90,7 +90,7 @@ public class CityWeatherService {
         // 2) 非目录城市：仅在带天气意图时尝试，避免对功能类问题误发外部请求
         if (hasWeatherKeyword(q)) {
             String candidate = extractCityCandidate(q);
-            if (candidate != null) {
+            if (candidate != null && !com.weather.util.CityNameGuard.isProvince(candidate)) {
                 try {
                     JSONObject result = weatherApiUtil.searchCity(candidate);
                     JSONArray loc = result != null ? result.getJSONArray("location") : null;

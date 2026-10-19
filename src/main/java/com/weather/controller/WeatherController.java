@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.weather.entity.*;
 import com.weather.service.*;
+import com.weather.util.CityNameGuard;
 import com.weather.util.UserContext;
 import com.weather.util.WeatherApiUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,6 +81,11 @@ public class WeatherController {
             return "redirect:/";
         }
         String cityName = city.trim();
+        if (CityNameGuard.isProvince(cityName)) {
+            model.addAttribute("searchError", CityNameGuard.message());
+            model.addAttribute("user", user);
+            return "index";
+        }
         try {
             JSONObject result = weatherApiUtil.searchCity(cityName);
             String cityCode = firstCityCode(result);
@@ -145,6 +151,11 @@ public class WeatherController {
             return "redirect:/weather/ai-forecast";
         }
         String cityName = city.trim();
+        if (CityNameGuard.isProvince(cityName)) {
+            model.addAttribute("forecastError", CityNameGuard.message());
+            model.addAttribute("user", userContext.currentUser());
+            return "ai-forecast";
+        }
         try {
             JSONObject result = weatherApiUtil.searchCity(cityName);
             String cityCode = firstCityCode(result);
@@ -185,6 +196,11 @@ public class WeatherController {
             return "statistics";
         }
         String cityName = city.trim();
+        if (CityNameGuard.isProvince(cityName)) {
+            model.addAttribute("statsError", CityNameGuard.message());
+            model.addAttribute("user", userContext.currentUser());
+            return "statistics";
+        }
         try {
             JSONObject result = weatherApiUtil.searchCity(cityName);
             String cityCode = firstCityCode(result);
@@ -224,6 +240,13 @@ public class WeatherController {
             return "redirect:/weather/warning";
         }
         String cityName = city.trim();
+        if (CityNameGuard.isProvince(cityName)) {
+            model.addAttribute("searchError", CityNameGuard.message());
+            model.addAttribute("warnings", new JSONArray());
+            model.addAttribute("hotCities", DEFAULT_CITIES);
+            model.addAttribute("user", user);
+            return "warnings";
+        }
         try {
             JSONArray warnings = weatherWarningService.fetchWarningsFromWeathercn(cityName);
             model.addAttribute("warnings", warnings);
