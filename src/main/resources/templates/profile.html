@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,7 +22,7 @@
     <div class="container mt-4">
         <!-- 页面标题 -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3>
+            <h3 class="mb-0">
                 <i class="bi bi-person-circle text-primary me-2"></i>个人中心
             </h3>
             <a th:href="@{/}" class="btn btn-outline-secondary btn-sm rounded-pill">
@@ -44,52 +43,56 @@
         </div>
 
         <div class="row g-4">
-            <!-- 左侧：用户头像和基本信息 -->
+            <!-- 左侧：账号概览（粘性） -->
             <div class="col-lg-4">
-                <div class="card border-0 shadow-lg rounded-4 mb-4">
-                    <div class="card-body text-center p-5">
-                        <!-- 头像 -->
-                        <div class="mb-3">
-                            <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle"
-                                 style="width: 100px; height: 100px; font-size: 2.5rem;">
-                                <span th:text="${user.nickname != null and !user.nickname.isEmpty() ? user.nickname.substring(0, 1) : 'U'}">U</span>
+                <div class="card border-0 shadow-lg rounded-4 sticky-lg-top" style="top: 1rem;">
+                    <div class="card-body text-center p-4">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle mb-3"
+                             style="width: 96px; height: 96px; font-size: 2.4rem;">
+                            <span th:text="${user.nickname != null and !user.nickname.isEmpty() ? user.nickname.substring(0, 1) : (user.username.substring(0,1))}">U</span>
+                        </div>
+                        <h5 class="mb-1" th:text="${user.nickname != null and !user.nickname.isEmpty() ? user.nickname : user.username}">用户昵称</h5>
+                        <p class="text-muted mb-3 small">
+                            <i class="bi bi-at me-1"></i><span th:text="${user.username}">username</span>
+                        </p>
+
+                        <div class="text-start small">
+                            <div class="d-flex align-items-center mb-2" th:if="${user.email != null and !user.email.isEmpty()}">
+                                <i class="bi bi-envelope text-muted me-2"></i><span th:text="${user.email}" class="text-truncate">email</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2" th:if="${user.phone != null and !user.phone.isEmpty()}">
+                                <i class="bi bi-telephone text-muted me-2"></i><span th:text="${user.phone}">phone</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2" th:if="${user.city != null and !user.city.isEmpty()}">
+                                <i class="bi bi-geo-alt text-muted me-2"></i>默认城市：<span th:text="${user.city}">北京</span>
                             </div>
                         </div>
-                        <!-- 用户信息 -->
-                        <h4 class="mb-1" th:text="${user.nickname != null and !user.nickname.isEmpty() ? user.nickname : user.username}">用户昵称</h4>
-                        <p class="text-muted mb-2">
-                            <i class="bi bi-person me-1"></i>
-                            <span th:text="${user.username}">username</span>
-                        </p>
-                        <p class="text-muted mb-2" th:if="${user.email != null and !user.email.isEmpty()}">
-                            <i class="bi bi-envelope me-1"></i>
-                            <span th:text="${user.email}">email@example.com</span>
-                        </p>
-                        <p class="text-muted mb-2" th:if="${user.phone != null and !user.phone.isEmpty()}">
-                            <i class="bi bi-phone me-1"></i>
-                            <span th:text="${user.phone}">13800138000</span>
-                        </p>
-                        <p class="text-muted mb-2" th:if="${user.city != null and !user.city.isEmpty()}">
-                            <i class="bi bi-geo-alt me-1"></i>
-                            默认城市：<span th:text="${user.city}">北京</span>
-                        </p>
-                        <p class="mb-0">
-                            <span class="badge rounded-pill"
-                                  th:classappend="${user.pushEnabled != null and user.pushEnabled ? 'bg-success' : 'bg-secondary'}"
-                                  th:text="${user.pushEnabled != null and user.pushEnabled ? '推送已开启' : '推送已关闭'}">
-                                推送状态
-                            </span>
-                        </p>
+
+                        <span class="badge rounded-pill mt-2"
+                              th:classappend="${user.pushEnabled != null and user.pushEnabled ? 'bg-success' : 'bg-secondary'}"
+                              th:text="${user.pushEnabled != null and user.pushEnabled ? '推送已开启' : '推送已关闭'}">推送状态</span>
+                    </div>
+
+                    <!-- 快捷跳转 -->
+                    <div class="card-footer bg-white border-0 pb-3">
+                        <div class="list-group list-group-flush rounded-3">
+                            <a href="#profile-info" class="list-group-item list-group-item-action"><i class="bi bi-pencil-square me-2 text-primary"></i>个人信息</a>
+                            <a href="#profile-favorites" class="list-group-item list-group-item-action"><i class="bi bi-star me-2 text-warning"></i>我的收藏</a>
+                            <a href="#profile-push" class="list-group-item list-group-item-action"><i class="bi bi-bell me-2 text-info"></i>推送记录</a>
+                            <a href="#profile-password" class="list-group-item list-group-item-action"><i class="bi bi-shield-lock me-2 text-success"></i>修改密码</a>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 右侧：编辑表单和列表 -->
+            <!-- 右侧：分区内容 -->
             <div class="col-lg-8">
+
                 <!-- 个人信息编辑 -->
-                <div id="profile-info" class="card border-0 shadow-lg rounded-4 mb-4">
-                    <div class="card-header bg-primary text-white rounded-top-4">
-                        <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>个人信息</h5>
+                <div id="profile-info" class="card border-0 shadow-lg rounded-4 mb-4 section-card">
+                    <div class="card-header bg-transparent border-0 pb-0 pt-4">
+                        <h5 class="mb-0 section-title"><i class="bi bi-pencil-square text-primary me-2"></i>个人信息</h5>
+                        <p class="text-muted small mb-0 mt-1">维护你的昵称、联系方式与默认城市。</p>
                     </div>
                     <div class="card-body p-4">
                         <form th:action="@{/user/profile}" method="post">
@@ -140,9 +143,10 @@
                 </div>
 
                 <!-- 修改密码 -->
-                <div id="profile-password" class="card border-0 shadow-lg rounded-4 mb-4">
-                    <div class="card-header bg-warning text-dark rounded-top-4">
-                        <h5 class="mb-0"><i class="bi bi-shield-lock me-2"></i>修改密码</h5>
+                <div id="profile-password" class="card border-0 shadow-lg rounded-4 mb-4 section-card">
+                    <div class="card-header bg-transparent border-0 pb-0 pt-4">
+                        <h5 class="mb-0 section-title"><i class="bi bi-shield-lock text-success me-2"></i>修改密码</h5>
+                        <p class="text-muted small mb-0 mt-1">建议定期更换，密码至少 6 位。</p>
                     </div>
                     <div class="card-body p-4">
                         <form th:action="@{/user/password}" method="post">
@@ -164,7 +168,7 @@
                                 </div>
                             </div>
                             <div class="mt-4">
-                                <button type="submit" class="btn btn-warning rounded-pill px-4">
+                                <button type="submit" class="btn btn-success rounded-pill px-4">
                                     <i class="bi bi-key me-1"></i>修改密码
                                 </button>
                             </div>
@@ -173,68 +177,37 @@
                 </div>
 
                 <!-- 我的收藏 -->
-                <div id="profile-favorites" class="card border-0 shadow-lg rounded-4 mb-4">
-                    <div class="card-header bg-info text-white rounded-top-4 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="bi bi-star me-2"></i>我的收藏</h5>
-                        <button class="btn btn-sm btn-outline-light rounded-pill" onclick="loadFavorites()">
+                <div id="profile-favorites" class="card border-0 shadow-lg rounded-4 mb-4 section-card">
+                    <div class="card-header bg-transparent border-0 pb-0 pt-4 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0 section-title"><i class="bi bi-star text-warning me-2"></i>我的收藏</h5>
+                            <p class="text-muted small mb-0 mt-1">收藏常看的城市，便于快速查询。</p>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="loadFavorites()">
                             <i class="bi bi-arrow-clockwise me-1"></i>刷新
                         </button>
                     </div>
                     <div class="card-body p-4">
-                        <div id="favoritesLoading" class="text-center py-3">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">加载中...</span>
-                            </div>
-                        </div>
-                        <div id="favoritesEmpty" class="text-center py-3 d-none">
-                            <i class="bi bi-star text-muted fs-1"></i>
-                            <p class="text-muted mt-2">暂无收藏的城市</p>
-                            <a th:href="@{/}" class="btn btn-outline-primary btn-sm rounded-pill">
-                                <i class="bi bi-search me-1"></i>去搜索收藏城市
-                            </a>
-                        </div>
-                        <div id="favoritesList" class="d-none">
-                            <div class="list-group list-group-flush" id="favoritesContainer">
-                                <!-- 动态填充 -->
-                            </div>
+                        <div id="favoritesList">
+                            <div class="text-center text-muted py-3"><div class="spinner-border spinner-border-sm me-2"></div>加载中…</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 推送记录 -->
-                <div id="profile-push" class="card border-0 shadow-lg rounded-4 mb-4">
-                    <div class="card-header bg-secondary text-white rounded-top-4 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="bi bi-bell me-2"></i>推送记录</h5>
-                        <button class="btn btn-sm btn-outline-light rounded-pill" onclick="loadPushRecords()">
+                <div id="profile-push" class="card border-0 shadow-lg rounded-4 mb-4 section-card">
+                    <div class="card-header bg-transparent border-0 pb-0 pt-4 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0 section-title"><i class="bi bi-bell text-info me-2"></i>推送记录</h5>
+                            <p class="text-muted small mb-0 mt-1">系统每日天气与极端天气预警的推送历史。</p>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="loadPushRecords()">
                             <i class="bi bi-arrow-clockwise me-1"></i>刷新
                         </button>
                     </div>
                     <div class="card-body p-4">
-                        <div id="pushLoading" class="text-center py-3">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">加载中...</span>
-                            </div>
-                        </div>
-                        <div id="pushEmpty" class="text-center py-3 d-none">
-                            <i class="bi bi-bell-slash text-muted fs-1"></i>
-                            <p class="text-muted mt-2">暂无推送记录</p>
-                        </div>
-                        <div id="pushList" class="d-none">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>推送类型</th>
-                                            <th>推送内容</th>
-                                            <th>状态</th>
-                                            <th>推送时间</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="pushContainer">
-                                        <!-- 动态填充 -->
-                                    </tbody>
-                                </table>
-                            </div>
+                        <div id="pushRecordsList">
+                            <div class="text-center text-muted py-3"><div class="spinner-border spinner-border-sm me-2"></div>加载中…</div>
                         </div>
                     </div>
                 </div>
@@ -247,127 +220,5 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script th:src="@{/js/main.js}"></script>
-    <script>
-        // 页面加载时获取收藏和推送记录
-        document.addEventListener('DOMContentLoaded', function() {
-            loadFavorites();
-            loadPushRecords();
-        });
-
-        // 加载收藏列表
-        function loadFavorites() {
-            var loading = document.getElementById('favoritesLoading');
-            var empty = document.getElementById('favoritesEmpty');
-            var list = document.getElementById('favoritesList');
-            var container = document.getElementById('favoritesContainer');
-
-            loading.classList.remove('d-none');
-            empty.classList.add('d-none');
-            list.classList.add('d-none');
-
-            fetch('/api/favorite/list')
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                loading.classList.add('d-none');
-                if (data.code === 200 && data.data && data.data.length > 0) {
-                    list.classList.remove('d-none');
-                    container.innerHTML = '';
-                    data.data.forEach(function(fav) {
-                        var item = document.createElement('div');
-                        item.className = 'list-group-item d-flex justify-content-between align-items-center border-0 border-bottom px-0';
-                        item.innerHTML =
-                            '<div>' +
-                                '<i class="bi bi-geo-alt text-primary me-2"></i>' +
-                                '<strong>' + escapeHtml(fav.city) + '</strong>' +
-                                '<small class="text-muted ms-2">(' + escapeHtml(fav.cityCode) + ')</small>' +
-                                (fav.remark ? '<small class="text-muted ms-2">- ' + escapeHtml(fav.remark) + '</small>' : '') +
-                            '</div>' +
-                            '<div>' +
-                                '<a href="/weather/detail/' + encodeURIComponent(fav.cityCode) + '?cityName=' + encodeURIComponent(fav.city) + '" class="btn btn-sm btn-outline-primary rounded-pill me-1">' +
-                                    '<i class="bi bi-cloud-sun me-1"></i>查看天气' +
-                                '</a>' +
-                                '<button class="btn btn-sm btn-outline-danger rounded-pill" onclick="removeFavorite(' + fav.id + ', this)">' +
-                                    '<i class="bi bi-trash"></i>' +
-                                '</button>' +
-                            '</div>';
-                        container.appendChild(item);
-                    });
-                } else {
-                    empty.classList.remove('d-none');
-                }
-            })
-            .catch(function() {
-                loading.classList.add('d-none');
-                empty.classList.remove('d-none');
-            });
-        }
-
-        // 取消收藏
-        function removeFavorite(favoriteId, btn) {
-            if (!confirm('确定要取消收藏吗？')) return;
-            fetch('/api/favorite/remove', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: 'favoriteId=' + favoriteId
-            })
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                if (data.code === 200) {
-                    loadFavorites();
-                } else {
-                    alert(data.msg || '取消收藏失败');
-                }
-            });
-        }
-
-        // 加载推送记录
-        function loadPushRecords() {
-            var loading = document.getElementById('pushLoading');
-            var empty = document.getElementById('pushEmpty');
-            var list = document.getElementById('pushList');
-            var container = document.getElementById('pushContainer');
-
-            loading.classList.remove('d-none');
-            empty.classList.add('d-none');
-            list.classList.add('d-none');
-
-            fetch('/api/push/records')
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                loading.classList.add('d-none');
-                if (data.code === 200 && data.data && data.data.length > 0) {
-                    list.classList.remove('d-none');
-                    container.innerHTML = '';
-                    data.data.forEach(function(record) {
-                        var tr = document.createElement('tr');
-                        var statusBadge = record.pushStatus === 1
-                            ? '<span class="badge bg-success">发送成功</span>'
-                            : '<span class="badge bg-danger">发送失败</span>';
-                        var pushTime = record.pushTime || record.createTime || '--';
-                        tr.innerHTML =
-                            '<td><span class="badge bg-info text-dark">' + escapeHtml(record.pushType || '--') + '</span></td>' +
-                            '<td class="text-truncate" style="max-width: 300px;" title="' + escapeHtml(record.pushContent || '') + '">' + escapeHtml(record.pushContent || '--') + '</td>' +
-                            '<td>' + statusBadge + '</td>' +
-                            '<td class="text-nowrap">' + escapeHtml(pushTime) + '</td>';
-                        container.appendChild(tr);
-                    });
-                } else {
-                    empty.classList.remove('d-none');
-                }
-            })
-            .catch(function() {
-                loading.classList.add('d-none');
-                empty.classList.remove('d-none');
-            });
-        }
-
-        // HTML转义
-        function escapeHtml(text) {
-            if (!text) return '';
-            var div = document.createElement('div');
-            div.appendChild(document.createTextNode(text));
-            return div.innerHTML;
-        }
-    </script>
 </body>
 </html>

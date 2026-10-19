@@ -69,6 +69,7 @@ public class WeatherController {
         } catch (Exception e) {
             model.addAttribute("weatherError", "天气数据获取失败，请稍后重试");
         }
+        model.addAttribute("user", user);
         return "index";
     }
 

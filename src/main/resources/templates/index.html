@@ -267,6 +267,7 @@
     </script>
     <script>
         function toggleFavorite(isAdd, btn) {
+            if (!requireLogin()) return;
             var city = btn.getAttribute('data-city');
             var cityCode = btn.getAttribute('data-city-code');
             if (isAdd) {

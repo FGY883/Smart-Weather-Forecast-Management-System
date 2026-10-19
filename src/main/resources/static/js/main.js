@@ -2,6 +2,35 @@
    智能天气预报系统 - 主脚本
    ============================================ */
 
+/* CSRF：为所有非 GET 的同源 fetch 自动附带 X-XSRF-TOKEN（读取 CookieCsrfTokenRepository 写入的 XSRF-TOKEN），
+   修复此前收藏增删等 POST 请求缺少 CSRF 令牌被 403 拦截的问题。 */
+(function installCsrfHeader() {
+    if (!window.fetch) return;
+    function getCsrf() {
+        var m = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
+        return m ? decodeURIComponent(m[1]) : null;
+    }
+    var _fetch = window.fetch;
+    window.fetch = function (input, init) {
+        init = init || {};
+        var method = (init.method || (input && input.method) || 'GET').toUpperCase();
+        if (method !== 'GET' && method !== 'HEAD') {
+            var token = getCsrf();
+            if (token) {
+                var h = init.headers;
+                if (h && typeof h.append === 'function') {
+                    if (!h.get('X-XSRF-TOKEN')) h.append('X-XSRF-TOKEN', token);
+                } else {
+                    h = h || {};
+                    if (!h['X-XSRF-TOKEN']) h['X-XSRF-TOKEN'] = token;
+                    init.headers = h;
+                }
+            }
+        }
+        return _fetch.call(this, input, init);
+    };
+})();
+
 // 天气图标映射
 const weatherIcons = {
     '晴': '☀️', '多云': '⛅', '阴': '☁️', '小雨': '🌦️', '中雨': '🌧️',
@@ -21,10 +50,38 @@ function getWeatherIcon(text) {
     return '🌤️';
 }
 
+/* ============================================
+   登录态工具：未登录时执行受保护操作，提示登录并引导跳转
+   登录态由服务端 fragments::navbar 注入的 #authState[data-auth] 提供
+   ============================================ */
+function isLoggedIn() {
+    const el = document.getElementById('authState');
+    return !!(el && el.getAttribute('data-auth') === 'true');
+}
+
+function requireLogin(message) {
+    if (isLoggedIn()) return true;
+    showToast(message || '该操作需要登录后进行', 'warning');
+    const el = document.getElementById('authState');
+    const login = (el && el.getAttribute('data-login')) || '/login';
+    setTimeout(() => {
+        window.location.href = login;
+    }, 1000);
+    return false;
+}
+
+function esc(s) {
+    if (s === null || s === undefined) return '';
+    const d = document.createElement('div');
+    d.appendChild(document.createTextNode(String(s)));
+    return d.innerHTML;
+}
+
 /**
  * 添加收藏
  */
 function addFavorite(city, cityCode) {
+    if (!requireLogin()) return;
     fetch('/api/favorite/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -51,6 +108,7 @@ function addFavorite(city, cityCode) {
  * 通过城市编码取消收藏
  */
 function removeFavoriteByCityCode(cityCode) {
+    if (!requireLogin()) return;
     // 先获取收藏列表找到对应的ID
     fetch('/api/favorite/list')
     .then(res => res.json())
@@ -68,6 +126,7 @@ function removeFavoriteByCityCode(cityCode) {
  * 取消收藏
  */
 function removeFavorite(favoriteId) {
+    if (!requireLogin()) return;
     fetch('/api/favorite/remove', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -102,6 +161,7 @@ function removeFavorite(favoriteId) {
  * 切换收藏状态
  */
 function toggleFavorite(isFavorited, btn) {
+    if (!requireLogin()) return;
     const city = btn.dataset.city;
     const cityCode = btn.dataset.cityCode;
     if (isFavorited) {
@@ -144,6 +204,7 @@ function showToast(message, type = 'info') {
 function loadFavorites() {
     const container = document.getElementById('favoritesList');
     if (!container) return;
+    if (!isLoggedIn()) return;
 
     fetch('/api/favorite/list')
     .then(res => res.json())
@@ -156,7 +217,7 @@ function loadFavorites() {
                         <div>
                             <i class="bi bi-geo-alt-fill text-primary me-2"></i>
                             <a href="/weather/detail/${fav.cityCode}?cityName=${encodeURIComponent(fav.city)}" class="text-decoration-none">
-                                <strong>${fav.city}</strong>
+                                <strong>${esc(fav.city)}</strong>
                             </a>
                         </div>
                         <button class="btn btn-sm btn-outline-danger" onclick="removeFavorite(${fav.id})">
@@ -182,6 +243,7 @@ function loadFavorites() {
 function loadPushRecords() {
     const container = document.getElementById('pushRecordsList');
     if (!container) return;
+    if (!isLoggedIn()) return;
 
     fetch('/api/push/records')
     .then(res => res.json())
@@ -195,9 +257,9 @@ function loadPushRecords() {
                     <div class="list-group-item">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <span class="badge bg-${typeBadge}">${typeLabel}</span>
-                            <small class="text-muted">${record.createTime || ''}</small>
+                            <small class="text-muted">${esc(record.createTime)}</small>
                         </div>
-                        <pre class="mb-0" style="white-space:pre-wrap;font-size:0.9rem;color:#555;">${record.pushContent || ''}</pre>
+                        <pre class="mb-0" style="white-space:pre-wrap;font-size:0.9rem;color:#555;">${esc(record.pushContent)}</pre>
                     </div>
                 `;
             });
