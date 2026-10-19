@@ -8,6 +8,9 @@ server:
 spring:
   application:
     name: smart-weather-forecast
+  # 自动加载 gitignored 的 application-local.yml 覆盖密钥；新克隆环境无该文件时安全跳过
+  profiles:
+    include: local
   sql:
     init:
       mode: ${SQL_INIT_MODE:always}
