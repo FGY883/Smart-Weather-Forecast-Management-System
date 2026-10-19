@@ -57,25 +57,27 @@
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <a class="dropdown-item" th:href="@{/user/profile}">
+                            <a class="dropdown-item" th:href="@{/user/profile#profile-info}">
                                 <i class="bi bi-pencil-square me-2"></i>个人信息
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" th:href="@{/user/profile}">
+                            <a class="dropdown-item" th:href="@{/user/profile#profile-favorites}">
                                 <i class="bi bi-star me-2"></i>我的收藏
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" th:href="@{/user/profile}">
+                            <a class="dropdown-item" th:href="@{/user/profile#profile-push}">
                                 <i class="bi bi-bell me-2"></i>推送记录
                             </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <a class="dropdown-item text-danger" th:href="@{/logout}">
-                                <i class="bi bi-box-arrow-right me-2"></i>退出登录
-                            </a>
+                            <form th:action="@{/logout}" method="post" class="m-0">
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="bi bi-box-arrow-right me-2"></i>退出登录
+                                </button>
+                            </form>
                         </li>
                     </ul>
                 </li>
@@ -94,6 +96,18 @@
         </div>
     </div>
 </nav>
+
+<!-- ==================== 预警徽章片段（英文码 → 中文，等级配色） ==================== -->
+<th:block th:fragment="warningLevelBadge(level)">
+    <span class="badge ms-2"
+          th:classappend="${level == 'RED' ? 'bg-danger' : (level == 'ORANGE' ? 'bg-warning text-dark' : (level == 'YELLOW' ? 'bg-info text-dark' : 'bg-primary'))}"
+          th:text="${level == 'RED' ? '红色' : (level == 'ORANGE' ? '橙色' : (level == 'YELLOW' ? '黄色' : (level == 'BLUE' ? '蓝色' : level)))}">红色</span>
+</th:block>
+
+<th:block th:fragment="warningTypeBadge(type)">
+    <span class="badge bg-secondary ms-1"
+          th:text="${type == 'HIGH_TEMP' ? '高温' : (type == 'COLD_WAVE' ? '寒潮' : (type == 'HEAVY_RAIN' ? '暴雨' : (type == 'STRONG_WIND' ? '大风' : type)))}">类型</span>
+</th:block>
 
 <!-- ==================== 页脚片段 ==================== -->
 <footer th:fragment="footer" class="bg-light text-muted py-4 mt-5 border-top">

@@ -60,7 +60,7 @@
                     <input type="hidden" name="city" th:value="${currentCity}">
                     <label for="yearSelect" class="form-label mb-0 text-nowrap">选择年份：</label>
                     <select class="form-select form-select-sm" id="yearSelect" name="year" style="width: auto;" onchange="this.form.submit()">
-                        <option th:each="y : ${#numbers.sequence(2020, 2026)}"
+                        <option th:each="y : ${years}"
                                 th:value="${y}" th:text="${y} + '年'"
                                 th:selected="${y == year}">2026年</option>
                     </select>
@@ -73,6 +73,27 @@
             <i class="bi bi-exclamation-circle me-1"></i>
             <span th:text="${statsError}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- 数据来源/估算标注 -->
+        <div th:if="${statistics != null and !statistics.isEmpty()}"
+             th:classappend="${estimated} ? 'alert-warning' : 'alert-info'"
+             class="alert d-flex align-items-start gap-2 rounded-3" role="status">
+            <i th:classappend="${estimated} ? 'bi-exclamation-triangle-fill' : 'bi-check-circle'"
+               class="bi flex-shrink-0 mt-1"></i>
+            <div>
+                <strong th:if="${estimated}">部分数据为气候常理估算。</strong>
+                <strong th:unless="${estimated}">数据基于实测天气记录。</strong>
+                <span class="small d-block mt-1">
+                    <span th:text="${currentCity}">北京</span>
+                    <span th:text="${year}">2026</span> 年实测样本
+                    <strong th:text="${realDays}">0</strong> 天。
+                    <span th:if="${estimated}"
+                          class="text-muted">当月实测样本不足（&lt;28 天）时，系统按城市气候常理（历史同期均值 + 季节规律）推算，仅供趋势参考，不代表真实观测值。</span>
+                    <span th:unless="${estimated}"
+                          class="text-muted">以上统计主要由真实观测数据聚合而成。</span>
+                </span>
+            </div>
         </div>
 
         <!-- 图表区域 -->

@@ -44,10 +44,10 @@ CREATE TABLE IF NOT EXISTS `weather_data` (
     `visibility` DECIMAL(5,1) DEFAULT NULL COMMENT '能见度(km)',
     `uv_index` INT DEFAULT NULL COMMENT '紫外线指数',
     `precip` DECIMAL(5,1) DEFAULT NULL COMMENT '降水量(mm)',
-    `data_type` TINYINT DEFAULT 1 COMMENT '数据类型(1实况2预报)',
+    `data_type` TINYINT DEFAULT 1 COMMENT '数据类型(1实况 2预报 3历史)',
     `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (`id`),
-    KEY `idx_city_date` (`city_code`, `weather_date`),
+    UNIQUE KEY `uk_city_date_type` (`city_code`, `weather_date`, `data_type`),
     KEY `idx_weather_date` (`weather_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='天气数据表';
 
