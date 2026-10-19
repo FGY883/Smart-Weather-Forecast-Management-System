@@ -13,15 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
-import org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy;
-import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
-import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -41,21 +34,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SessionAuthenticationStrategy sessionAuthenticationStrategy(SessionRegistry sessionRegistry) {
-        // 同一账号仅允许一个会话，新登录会自动踢掉旧会话
-        ConcurrentSessionControlAuthenticationStrategy concurrent =
-                new ConcurrentSessionControlAuthenticationStrategy(sessionRegistry);
-        concurrent.setMaximumSessions(1);
-        concurrent.setExceptionIfMaximumExceeded(false);
-        return new CompositeSessionAuthenticationStrategy(Arrays.asList(
-                concurrent,
-                new RegisterSessionAuthenticationStrategy(sessionRegistry)
-        ));
-    }
-
-    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           SessionAuthenticationStrategy sessionAuthStrategy,
                                            SessionRegistry sessionRegistry) throws Exception {
         AuthenticationSuccessHandler successHandler = (request, response, authentication) -> {
             loginAttemptService.reset(authentication.getName());
@@ -76,7 +55,6 @@ public class SecurityConfig {
 
         http
             .sessionManagement(s -> s
-                    .sessionAuthenticationStrategy(sessionAuthStrategy)
                     .maximumSessions(1)
                     .maxSessionsPreventsLogin(false)
                     .sessionRegistry(sessionRegistry))

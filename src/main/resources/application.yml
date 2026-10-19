@@ -4,6 +4,9 @@ server:
     encoding:
       charset: UTF-8
       force: true
+    # 会话超时：默认 30 分钟会导致登录后隔一会儿被登出，延长到 8 小时贴合演示
+    session:
+      timeout: 8h
 
 spring:
   application:
