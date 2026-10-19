@@ -59,7 +59,9 @@ public class SecurityConfig {
                     .maxSessionsPreventsLogin(false)
                     .sessionRegistry(sessionRegistry))
             .authorizeRequests()
-                .antMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/vendor/**", "/weather/**", "/api/aether/**", "/error").permitAll()
+                // 仅登录/注册页与静态资源、错误页放行；其余（含首页 / 与 /weather/**）需登录，
+                // 未登录访问会被自动重定向到登录页，登录后再进入首页
+                .antMatchers("/login", "/register", "/css/**", "/js/**", "/images/**", "/vendor/**", "/api/aether/**", "/error").permitAll()
                 .antMatchers("/user/**", "/favorite/**", "/push/**").authenticated()
                 .anyRequest().authenticated()
             .and()
