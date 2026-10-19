@@ -338,6 +338,72 @@ input[type="email"], input[type="number"], input[type="search"], textarea {
     color: var(--ink) !important;
 }
 
+/* ---------- 数据表统一精修（7天预报 / 数据统计 等各页表格协调一致） ---------- */
+/* 淡蓝斑马纹，呼应表头 cream→sky 渐变 */
+.table > tbody tr:nth-child(even) > * { background-color: rgba(176, 222, 255, 0.10); }
+/* 数字等宽对齐、单元格不换行更整齐 */
+.table > thead th, .table > tbody td { font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* 首列（序号/日期/月份/方法）作为行标签强调 */
+.table > tbody td:first-child { font-weight: 700; color: var(--ink); }
+/* table-sm 也保持与常规表一致的内边距，避免被压挤 */
+.table.table-sm > thead th, .table.table-sm > tbody td { padding: 13px 12px; }
+/* 卡片 p-0 内表格：表格本身去掉圆角，使紧贴卡头的表头栏为直角、无缺口；
+   底部圆角交给外层 .table-responsive 承接，与卡片一致 */
+.card > .card-body.p-0 > .table-responsive > .table {
+    border-radius: 0;
+    overflow: visible;
+}
+.card > .card-body.p-0 > .table-responsive {
+    border-bottom-left-radius: var(--r-card-soft);
+    border-bottom-right-radius: var(--r-card-soft);
+    overflow: hidden;
+}
+
+/* ---------- 统一卡头（Aether 风：cream→sky 渐变 + 墨色标题 + 柔和胶囊徽标） ---------- */
+.aether-card-header {
+    background: linear-gradient(135deg, rgba(255, 222, 175, 0.55) 0%, rgba(176, 222, 255, 0.55) 100%);
+    border: 0;
+}
+.aether-card-header h5 {
+    color: var(--ink);
+    font-family: var(--font-cn);
+}
+.aether-card-header .badge {
+    background: rgba(255, 255, 255, 0.72);
+    color: var(--ink-soft);
+    border: 1px solid rgba(60, 80, 120, 0.12);
+    font-weight: 600;
+}
+
+/* ---------- 板块“说明”折叠按钮与详情框（Aether 风） ---------- */
+.ai-explain-btn {
+    background: rgba(255, 255, 255, 0.72);
+    color: var(--ink-soft);
+    border: 1px solid rgba(60, 80, 120, 0.14);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.25rem 0.7rem;
+    line-height: 1.4;
+    transition: all .2s var(--ease-aether);
+}
+.ai-explain-btn:hover { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+.ai-explain-box {
+    background: var(--sky-mid);
+    border: 1px solid rgba(60, 80, 120, 0.08);
+    border-left: 3px solid var(--primary-color);
+    border-radius: 12px;
+    padding: 0.75rem 0.9rem;
+    color: var(--ink-soft);
+    line-height: 1.75;
+}
+.ai-explain-box code {
+    color: var(--primary-dark);
+    background: rgba(74, 144, 217, 0.10);
+    padding: 0 0.3rem;
+    border-radius: 4px;
+}
+
 /* ============================================================
    徽章（Aether 胶囊）
    ============================================================ */

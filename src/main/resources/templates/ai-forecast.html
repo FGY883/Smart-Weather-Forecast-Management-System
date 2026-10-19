@@ -83,13 +83,25 @@
                     </div>
                     <div class="col-md-6">
                         <div class="border rounded-4 p-3 h-100">
-                            <h6 class="text-success mb-2"><i class="bi bi-cpu me-1"></i>AI 智能预测（本系统自研）</h6>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="text-success mb-0"><i class="bi bi-cpu me-1"></i>可解释趋势预测（本系统）</h6>
+                                <button type="button" class="ai-explain-btn" data-bs-toggle="collapse" data-bs-target="#predExplain" aria-expanded="false" aria-controls="predExplain">
+                                    <i class="bi bi-info-circle me-1"></i>说明
+                                </button>
+                            </div>
                             <p class="text-muted small mb-0">
                                 基于本站落库的<strong>近 30 天历史数据</strong>，用
                                 <strong>最小二乘线性回归 + 近 7 天加权移动平均</strong>按 <strong>6:4</strong> 融合，
-                                叠加斜率限幅(±0.5℃/天)与均值回复阻尼(0.88ⁱ)抑制外推发散，
-                                并由历史序列方差给出置信度。在图中以<strong>虚线</strong>展示。
+                                叠加斜率限幅(±0.5℃/天)与向近期水平的阻尼回拉(0.88ⁱ)抑制外推发散；置信度基于回归决定系数 R²。
+                                其<b>误差与技巧分经下方“回测校验”与官方预报对比公开呈现</b>。在图中以<strong>虚线</strong>展示。
                             </p>
+                            <div class="collapse" id="predExplain">
+                                <div class="ai-explain-box small mt-2">
+                                    <b>怎么做：</b>① 取近 30 天历史<b>按天聚合去重</b>（防 NULL/重复行拉偏）；② 最小二乘线性回归 <code>y=slope·x+intercept</code> 抓趋势，斜率<b>限幅 ±0.5℃/天</b>防发散；③ 向近期水平做 <code>0.88ⁱ</code> <b>阻尼回拉</b>，远期收敛不爆表；④ 近 7 天<b>加权移动平均</b>锚定当前水平；⑤ <b>60% 阻尼回归 + 40% 加权均值</b>融合，再钳制在历史区间 <code>[min−4, max+4]</code>；⑥ <b>置信度</b>基于回归决定系数 <b>R²</b>（趋势被线性解释的比例）。<br>
+                                    <b>回退：</b>历史不足时依次用 历史接口补齐 → 7 天预报 → 默认值。<br>
+                                    <b>定位与局限：</b>可逐行追溯的统计外推，<b>非黑盒模型</b>；线性假设、未用外部气象变量，绝对精度不替代官方数值预报。
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -103,8 +115,8 @@
 
         <!-- 温度趋势图 -->
         <div th:if="${forecast != null and !forecast.isEmpty()}" class="card border-0 shadow-lg rounded-4 mb-4">
-            <div class="card-header bg-gradient text-white rounded-top-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>AI 预测 vs 官方预报 · 未来7天温度对比</h5>
+            <div class="card-header aether-card-header rounded-top-4">
+                <h5 class="mb-0"><i class="bi bi-graph-up me-2" style="color:#6a5acd"></i>AI 预测 vs 官方预报 · 未来7天温度对比</h5>
             </div>
             <div class="card-body p-4">
                 <div id="temperatureChart" style="width: 100%; height: 400px;"></div>
@@ -113,17 +125,16 @@
 
         <!-- AI 智能预测明细 -->
         <div th:if="${predictions != null and !predictions.isEmpty()}" class="card border-0 shadow-lg rounded-4 mb-4">
-            <div class="card-header rounded-top-4 d-flex justify-content-between align-items-center"
-                 style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);">
-                <h5 class="mb-0 text-white"><i class="bi bi-cpu me-2"></i>AI 智能预测明细</h5>
-                <span class="badge bg-white bg-opacity-25 text-white rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+            <div class="card-header aether-card-header rounded-top-4 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-cpu me-2" style="color:#27ae60"></i>AI 智能预测明细</h5>
+                <span class="badge rounded-pill px-3 py-2" style="font-size: 0.72rem;">
                     <i class="bi bi-database me-1"></i>线性回归 + 加权移动平均
                 </span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                        <thead>
                             <tr>
                                 <th class="text-center">序号</th>
                                 <th class="text-center">目标日期</th>
@@ -173,22 +184,112 @@
                 </div>
             </div>
             <div class="card-footer bg-white text-muted small">
-                <i class="bi bi-graph-up-arrow me-1"></i>置信度基于近 30 天历史序列方差估算，越低代表该城市近期天气波动越大、预测越不可靠。
+                <i class="bi bi-graph-up-arrow me-1"></i>置信度口径：基于近 30 天历史的<b>线性回归决定系数 R²</b>（趋势被线性解释的比例）并随样本量微调——R² 越高、天气越呈稳定趋势，预测越可信；纯噪声时回落至低位。
+            </div>
+        </div>
+
+        <!-- 预测可靠性 · 回测校验 -->
+        <div class="card border-0 shadow-lg rounded-4 mb-4">
+            <div class="card-header aether-card-header rounded-top-4 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-clipboard2-data me-2" style="color:#6a5acd"></i>预测可靠性 · 回测校验</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="ai-explain-btn" data-bs-toggle="collapse" data-bs-target="#backtestExplain" aria-expanded="false" aria-controls="backtestExplain">
+                        <i class="bi bi-info-circle me-1"></i>说明
+                    </button>
+                    <span class="badge rounded-pill px-3 py-2" style="font-size:0.72rem;">
+                        <i class="bi bi-arrow-repeat me-1"></i>walk-forward
+                    </span>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <div class="collapse" id="backtestExplain">
+                    <div class="ai-explain-box small mb-3">
+                        <b>回测(walk-forward)：</b>假装回到过去——只用目标日<b>之前</b>的数据预测它，再与该日<b>实际已发生值</b>比较，避免“用未来预测未来”的作弊。<br>
+                        <b>误差：</b>MAE(平均绝对误差)、RMSE(均方根误差，对大误差更敏感)，单位 ℃，<b>越小越好</b>。<br>
+                        <b>两条基线：</b>持久性(明天=今天，天气领域极强) 与 官方预报(历史 <code>data_type=2</code> 预报行)。<br>
+                        <b>技巧分：</b><code>1 − 模型RMSE / 基线RMSE</code>，&gt;0 优于基线、&lt;0 不及。<br>
+                        <b>提示：</b>历史越多样本越多越稳定；本系统定位为<b>透明可解释、误差可量化</b>的趋势参考，不冒充气象级预报。
+                    </div>
+                </div>
+                <div th:if="${accuracy != null and accuracy.available}">
+                    <p class="text-muted small">
+                        方法：以本城市<b>已发生的历史最高温</b>为“真实值”，用滚动原点回测最近
+                        <b th:text="${accuracy.horizon}">7</b> 天——对每个目标日<b>只用其之前的数据</b>预测，再与实际比较。
+                        误差用 <b>MAE</b>（平均绝对误差）与 <b>RMSE</b>（均方根误差，单位 ℃）。并与两条基线对比：
+                        <b>持久性</b>（明天=今天）与<b>官方预报</b>（历史预报行）。
+                        <b>技巧分 = 1 − 模型RMSE ⁄ 基线RMSE，&gt;0 表示优于该基线。</b>
+                    </p>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>方法</th>
+                                    <th class="text-center">MAE(℃) 越小越好</th>
+                                    <th class="text-center">RMSE(℃) 越小越好</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><i class="bi bi-cpu text-success me-1"></i>AI 预测（本系统）</td>
+                                    <td class="text-center fw-bold" th:text="${#numbers.formatDecimal(accuracy.modelMae,1,2)}">1.20</td>
+                                    <td class="text-center fw-bold" th:text="${#numbers.formatDecimal(accuracy.modelRmse,1,2)}">1.60</td>
+                                </tr>
+                                <tr>
+                                    <td><i class="bi bi-arrow-left-right text-secondary me-1"></i>持久性基线</td>
+                                    <td class="text-center text-muted" th:text="${#numbers.formatDecimal(accuracy.persistenceMae,1,2)}">1.80</td>
+                                    <td class="text-center text-muted" th:text="${#numbers.formatDecimal(accuracy.persistenceRmse,1,2)}">2.30</td>
+                                </tr>
+                                <tr th:if="${accuracy.officialRmse != null}">
+                                    <td><i class="bi bi-cloud-fill text-primary me-1"></i>官方预报</td>
+                                    <td class="text-center text-muted" th:text="${#numbers.formatDecimal(accuracy.officialMae,1,2)}">0.90</td>
+                                    <td class="text-center text-muted" th:text="${#numbers.formatDecimal(accuracy.officialRmse,1,2)}">1.10</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 技巧分与结论 -->
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        <span th:if="${accuracy.skillVsPersistenceRmse != null}" class="badge rounded-pill"
+                              th:classappend="${accuracy.skillVsPersistenceRmse > 0.1 ? 'bg-success' : (accuracy.skillVsPersistenceRmse >= 0 ? 'bg-warning text-dark' : 'bg-danger')}"
+                              th:text="'对持久性技巧分：' + ${#numbers.formatDecimal(accuracy.skillVsPersistenceRmse,1,2)}
+                                       + (${accuracy.skillVsPersistenceRmse > 0.1 ? '（优于基线）' : (accuracy.skillVsPersistenceRmse >= 0 ? '（接近基线）' : '（不及基线）')})">0.30</span>
+                        <span th:if="${accuracy.skillVsOfficialRmse != null}" class="badge rounded-pill"
+                              th:classappend="${accuracy.skillVsOfficialRmse >= 0 ? 'bg-info text-dark' : 'bg-secondary'}"
+                              th:text="'对官方预报技巧分：' + ${#numbers.formatDecimal(accuracy.skillVsOfficialRmse,1,2)}
+                                       + (${accuracy.skillVsOfficialRmse >= 0 ? '（不逊于官方）' : '（低于官方，属预期——官方为数值预报模式）'})">-0.20</span>
+                    </div>
+
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        回测样本 <b th:text="${accuracy.sampleDays}">7</b> 天 / 历史 <b th:text="${accuracy.historyDays}">30</b> 天。
+                        <span th:if="${accuracy.officialRmse != null}">官方基线覆盖 <b th:text="${#numbers.formatDecimal(accuracy.officialCoveragePct,1,0)}">60</b>%（仅对有历史预报行的日期计）。
+                            说明：本系统为<b>可解释的趋势统计预测</b>，目标不是取代官方数值预报，而是提供基于本地历史的透明参考——与官方对比校验，误差与技巧分公开可查。</span>
+                        <span th:unless="${accuracy.officialRmse != null}">暂无可对齐的历史官方预报行，故本次仅对比持久性基线。</span>
+                    </p>
+                </div>
+
+                <div th:unless="${accuracy != null and accuracy.available}" class="text-muted small">
+                    <i class="bi bi-hourglass-split me-1"></i>
+                    <span th:text="${accuracy != null ? accuracy.reason : '暂无回测数据'}">历史数据不足，暂无法可靠回测</span>。
+                    随着该系统逐日累积该城市历史，回测将自动可用。
+                </div>
             </div>
         </div>
 
         <!-- 7天天气预报详情表格 -->
         <div th:if="${forecast != null and !forecast.isEmpty()}" class="card border-0 shadow-lg rounded-4 mb-4">
-            <div class="card-header bg-primary text-white rounded-top-4 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-table me-2"></i>官方未来7天预报详情</h5>
-                <span class="badge bg-white bg-opacity-25 text-white rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+            <div class="card-header aether-card-header rounded-top-4 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-table me-2" style="color:#4A90D9"></i>官方未来7天预报详情</h5>
+                <span class="badge rounded-pill px-3 py-2" style="font-size: 0.72rem;">
                     <i class="bi bi-cloud me-1"></i>和风天气 API（官方）
                 </span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                        <thead>
                             <tr>
                                 <th class="text-center">序号</th>
                                 <th class="text-center">目标日期</th>
