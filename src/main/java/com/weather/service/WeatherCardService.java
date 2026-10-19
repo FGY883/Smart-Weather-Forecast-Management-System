@@ -193,6 +193,11 @@ public class WeatherCardService {
         return new java.util.ArrayList<>(CITY_CODES.keySet());
     }
 
+    /** 内置城市「名称→编码」目录（供助手等城市识别复用） */
+    public java.util.Map<String, String> getCityCatalog() {
+        return java.util.Collections.unmodifiableMap(CITY_CODES);
+    }
+
     /** 内置城市库数量（方便测试） */
     public int getCityLibSize() {
         return CITY_CODES.size();

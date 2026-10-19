@@ -60,6 +60,15 @@ weather:
     api-key: ${WEATHERCN_API_KEY:}
     base-url: https://openapi.weathercn.com
 
+# AI 助手大模型配置（OpenAI 兼容接口）。api-key 不入库，由环境变量或本地 application-local.yml 提供
+llm:
+  enabled: ${LLM_ENABLED:true}
+  base-url: ${LLM_BASE_URL:https://api.xiaomimimo.com/v1}
+  api-key: ${LLM_API_KEY:}
+  model: ${LLM_MODEL:mimo-v2.6-flash}
+  timeout-seconds: 20
+  max-tokens: ${LLM_MAX_TOKENS:500}
+
 # AI预测配置
 ai:
   prediction:

@@ -21,6 +21,13 @@ weather:
   weathercn:
     api-key: ${WEATHERCN_API_KEY}
 
+# 大模型密钥仅从环境变量注入
+llm:
+  enabled: ${LLM_ENABLED:true}
+  base-url: ${LLM_BASE_URL:https://api.xiaomimimo.com/v1}
+  api-key: ${LLM_API_KEY}
+  model: ${LLM_MODEL:mimo-v2.6-flash}
+
 logging:
   level:
     root: warn
