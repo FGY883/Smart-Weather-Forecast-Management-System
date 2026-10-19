@@ -129,6 +129,7 @@ public class WeatherController {
             }
             model.addAttribute("forecast", forecast);
             model.addAttribute("predictions", loadPredictions(cityCode, cityName));
+            model.addAttribute("accuracy", aiPredictionService.getAccuracy(cityCode));
         } catch (Exception e) {
             model.addAttribute("forecastError", "天气数据获取失败，请稍后重试");
         }
@@ -151,6 +152,7 @@ public class WeatherController {
                 String resolved = firstCityName(result, cityName);
                 model.addAttribute("forecast", weatherDataService.getForecast7Day(cityCode, resolved));
                 model.addAttribute("predictions", loadPredictions(cityCode, resolved));
+                model.addAttribute("accuracy", aiPredictionService.getAccuracy(cityCode));
                 model.addAttribute("currentCity", resolved);
                 model.addAttribute("currentCityCode", cityCode);
             } else {

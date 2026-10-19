@@ -64,19 +64,60 @@ public class AiPredictionUtil {
     }
 
     /**
-     * 计算置信度 - 基于数据方差
+     * 回归统计：把时间序列按 x=0..n-1 做最小二乘拟合 y=slope·x+intercept，
+     * 返回斜率、截距、决定系数 R²、残差标准误 RSE、样本量 n。
+     */
+    public static final class RegressionStats {
+        public final double slope, intercept, r2, rse;
+        public final int n;
+        public final double meanY, sdY, sxx;
+        RegressionStats(double slope, double intercept, double r2, double rse, int n,
+                        double meanY, double sdY, double sxx) {
+            this.slope = slope; this.intercept = intercept; this.r2 = r2; this.rse = rse; this.n = n;
+            this.meanY = meanY; this.sdY = sdY; this.sxx = sxx;
+        }
+        /** 置信度：趋势解释力 R² 为主，样本量做轻微佐证；夹在 [0.3, 0.95]，两位小数。 */
+        public double confidence() {
+            if (n < 3) return 0.5;
+            double sampleTerm = Math.min(1.0, n / 30.0);
+            double conf = 0.30 + 0.60 * r2 + 0.05 * sampleTerm;
+            return Math.max(0.30, Math.min(0.95, conf));
+        }
+    }
+
+    public RegressionStats regressionStats(double[] y) {
+        int n = y.length;
+        if (n < 2) return new RegressionStats(0, n == 1 ? y[0] : 0, 0, 0, n, n == 1 ? y[0] : 0, 0, 0);
+        double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+        for (int i = 0; i < n; i++) {
+            sumX += i; sumY += y[i]; sumXY += i * y[i]; sumX2 += (double) i * i;
+        }
+        double meanX = (double) (n - 1) / 2.0;
+        double meanY = sumY / n;
+        double denom = n * sumX2 - sumX * sumX;
+        double slope = denom == 0 ? 0 : (n * sumXY - sumX * sumY) / denom;
+        double intercept = meanY - slope * meanX;
+        double ssRes = 0, ssTot = 0, sxx = 0;
+        for (int i = 0; i < n; i++) {
+            double pred = slope * i + intercept;
+            ssRes += (y[i] - pred) * (y[i] - pred);
+            ssTot += (y[i] - meanY) * (y[i] - meanY);
+            double dx = i - meanX;
+            sxx += dx * dx;
+        }
+        double r2 = ssTot <= 1e-9 ? 0 : Math.max(0, Math.min(1, 1 - ssRes / ssTot));
+        double rse = (n > 2 && sxx > 1e-9) ? Math.sqrt(ssRes / (n - 2)) : 0;
+        double sdY = ssTot / n;
+        return new RegressionStats(slope, intercept, r2, rse, n, meanY, Math.sqrt(sdY), sxx);
+    }
+
+    /**
+     * 计算置信度 - 基于线性回归决定系数 R²（趋势解释力）与样本量。
+     * 取代旧的 1−σ/20 启发式：天气越呈稳定趋势(R² 高)可信度越高，纯噪声(R²≈0)回到低位。
      */
     public BigDecimal calculateConfidence(double[] data) {
-        if (data.length < 3) return new BigDecimal("0.50");
-        double mean = 0;
-        for (double v : data) mean += v;
-        mean /= data.length;
-        double variance = 0;
-        for (double v : data) variance += (v - mean) * (v - mean);
-        variance /= data.length;
-        double stdDev = Math.sqrt(variance);
-        double confidence = Math.max(0.5, 1.0 - stdDev / 20.0);
-        return new BigDecimal(confidence).setScale(2, RoundingMode.HALF_UP);
+        double conf = regressionStats(data).confidence();
+        return new BigDecimal(conf).setScale(2, RoundingMode.HALF_UP);
     }
 
     /**
@@ -139,7 +180,7 @@ public class AiPredictionUtil {
      * 4. 与近 7 天加权移动平均按 6:4 融合，锚定当前天气水平；
      * 5. 输出限制在历史观测区间 ±4 内，杜绝荒谬值。
      */
-    private List<BigDecimal> predictValues(double[] history, int days) {
+    public List<BigDecimal> predictValues(double[] history, int days) {
         List<BigDecimal> predictions = new ArrayList<>();
         if (history.length < 3) {
             double avg = 0;
@@ -161,13 +202,10 @@ public class AiPredictionUtil {
         }
         mean /= n;
 
-        // 1. 线性回归拟合总体趋势
-        double[] x = new double[n];
-        for (int i = 0; i < n; i++) x[i] = i;
-        double[] ab = linearRegression(x, history);
-
-        // 2. 斜率限幅：防止短期噪声造成的外推漂移
-        ab[0] = Math.max(-0.5, Math.min(0.5, ab[0]));
+        // 1. 最小二乘线性回归 + 残差标准误（用于趋势外推与置信度/区间）
+        RegressionStats rs = regressionStats(history);
+        // 2. 斜率限幅 ±0.5℃/天：防止短期噪声造成的外推漂移
+        double slope = Math.max(-0.5, Math.min(0.5, rs.slope));
 
         // 3. 加权移动平均刻画当前天气水平
         double level = weightedMovingAverage(history, Math.min(7, n));
@@ -177,12 +215,11 @@ public class AiPredictionUtil {
         double damp = 0.88;
 
         for (int i = 1; i <= days; i++) {
-            // 回归外推，并向序列均值做阻尼回拉
-            double reg = ab[0] * (n - 1 + i) + ab[1];
-            double reverted = mean + (reg - mean) * Math.pow(damp, i);
-            // 与近期水平融合（60% 回归 + 40% 加权移动平均）
+            // 回归外推，并向“近期水平 level”做阻尼回拉（而非全段均值，避免跨季节拉低、且更贴近当前天气）
+            double reg = slope * (n - 1 + i) + rs.intercept;
+            double reverted = level + (reg - level) * Math.pow(damp, i);
+            // 与近期水平融合（60% 阻尼回归 + 40% 加权移动平均）
             double fused = 0.6 * reverted + 0.4 * level;
-            // 限制在合理范围内
             fused = Math.max(lower, Math.min(upper, fused));
             predictions.add(new BigDecimal(fused).setScale(1, RoundingMode.HALF_UP));
         }

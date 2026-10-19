@@ -8,6 +8,7 @@ import com.weather.mapper.AiPredictionMapper;
 import com.weather.service.AiPredictionService;
 import com.weather.service.WeatherDataService;
 import com.weather.util.AiPredictionUtil;
+import com.weather.util.PredictionEvaluator;
 import com.weather.util.WeatherApiUtil;
 import com.weather.util.WeatherCache;
 import org.slf4j.Logger;
@@ -21,7 +22,9 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -36,6 +39,9 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
 
     @Autowired
     private AiPredictionUtil aiPredictionUtil;
+
+    @Autowired
+    private PredictionEvaluator predictionEvaluator;
 
     @Autowired
     private WeatherApiUtil weatherApiUtil;
@@ -240,6 +246,76 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
             .eq(AiPrediction::getCityCode, cityCode)
             .eq(AiPrediction::getPredictDate, today)
             .orderByAsc(AiPrediction::getTargetDate));
+    }
+
+    /** 回测取数的历史窗口天数（越大样本越多，但受实际入库历史限制）。 */
+    private static final int ACC_HISTORY_DAYS = 90;
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getAccuracy(String cityCode) {
+        if (cityCode == null || cityCode.isEmpty()) return accuracyUnavailable("未指定城市", 0);
+        String cacheKey = "ai:acc:" + cityCode;
+        Map<String, Object> cached = cache.get(cacheKey, Map.class);
+        if (cached != null) return cached;
+
+        LocalDate end = LocalDate.now().minusDays(1);
+        LocalDate start = end.minusDays(ACC_HISTORY_DAYS - 1);
+        List<WeatherData> raw;
+        try {
+            raw = weatherDataService.getHistoryData(cityCode, start, end);
+        } catch (Exception e) {
+            log.warn("回测取历史失败 city={}: {}", cityCode, e.getMessage());
+            raw = new ArrayList<>();
+        }
+
+        // 按数据类型拆分：data_type=2 为“历史预报行”(官方) ，其余(1 实况 / 3 历史) 视为“实际值”
+        Map<LocalDate, Double> actualByDate = new HashMap<>();
+        Map<LocalDate, Double> officialByDate = new HashMap<>();
+        if (raw != null) {
+            for (WeatherData d : raw) {
+                LocalDate date = d.getWeatherDate();
+                if (date == null) continue;
+                Double v = d.getTempMax() != null ? d.getTempMax().doubleValue()
+                        : (d.getTemp() != null ? d.getTemp().doubleValue() : null);
+                if (v == null) continue;
+                Integer type = d.getDataType();
+                if (type != null && type == 2) {
+                    officialByDate.merge(date, v, Math::max);
+                } else {
+                    actualByDate.merge(date, v, Math::max);
+                }
+            }
+        }
+
+        List<LocalDate> dates = new ArrayList<>(actualByDate.keySet());
+        Collections.sort(dates);
+        int n = dates.size();
+        if (n < 9) {
+            // 数据不足不缓存，待历史积累后自动可算
+            return accuracyUnavailable("该城市历史数据不足（约需 ≥9 天），暂无法可靠回测", n);
+        }
+        double[] actual = new double[n];
+        Double[] official = new Double[n];
+        for (int i = 0; i < n; i++) {
+            LocalDate dt = dates.get(i);
+            actual[i] = actualByDate.get(dt);
+            official[i] = officialByDate.get(dt); // 可能为 null
+        }
+
+        Map<String, Object> result = predictionEvaluator.evaluate(actual, official, forecastDays);
+        if (Boolean.TRUE.equals(result.get("available"))) {
+            cache.put(cacheKey, result, PREDICTION_TTL);
+        }
+        return result;
+    }
+
+    private Map<String, Object> accuracyUnavailable(String reason, int historyDays) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("available", false);
+        m.put("reason", reason);
+        m.put("historyDays", historyDays);
+        return m;
     }
 
     private List<AiPrediction> generateDefaultPrediction(String cityCode, String cityName) {
