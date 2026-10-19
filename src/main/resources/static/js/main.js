@@ -475,3 +475,146 @@ document.addEventListener('DOMContentLoaded', function() {
         loadPushRecords();
     }
 });
+
+/* ============================================================
+   “我的城市”网格（首页 / 详情页 Skies & Cities 板块）
+   数据源=用户收藏（DB 持久、随账号，重新登录不丢）；支持增删。
+   依赖 AetherCard（aether-card.js）与 showToast。
+   ============================================================ */
+function initCityGrid(gridId, addBtnId) {
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
+    const addBtn = document.getElementById(addBtnId);
+
+    function toast(m, t) { if (window.showToast) showToast(m, t || 'info'); }
+
+    function fetchCard(city) {
+        return fetch('/api/aether/weather?city=' + encodeURIComponent(city))
+            .then(r => r.json())
+            .then(res => (res && res.code === 200 && res.data) ? res.data : null);
+    }
+
+    function renderEmpty() {
+        grid.innerHTML = '<div class="empty"><span class="big">还没有城市</span>点“＋ 添加城市”，把常看的城市永久收藏到这里。</div>';
+    }
+
+    function decorateRemove() {
+        grid.querySelectorAll('.aether-card').forEach(card => {
+            if (card.querySelector('.aether-card-remove')) return;
+            const code = card.getAttribute('data-code');
+            const city = card.getAttribute('data-city');
+            const x = document.createElement('button');
+            x.type = 'button';
+            x.className = 'aether-card-remove';
+            x.title = '从我的城市移除';
+            x.setAttribute('aria-label', '移除 ' + city);
+            x.innerHTML = '<i class="bi bi-x-lg"></i>';
+            x.addEventListener('click', e => {
+                e.stopPropagation();
+                if (!code) { toast('缺少城市编码，无法移除', 'warning'); return; }
+                fetch('/api/favorite/remove', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'cityCode=' + encodeURIComponent(code)
+                }).then(r => r.json()).then(res => {
+                    if (res && res.code === 200) {
+                        card.remove();
+                        toast('已移除 ' + city, 'info');
+                        if (!grid.querySelector('.aether-card')) renderEmpty();
+                    } else {
+                        toast((res && res.msg) || '移除失败', 'danger');
+                    }
+                });
+            });
+            card.appendChild(x);
+        });
+    }
+
+    function loadGrid() {
+        fetch('/api/favorite/list')
+            .then(r => r.json())
+            .then(res => {
+                const favs = (res && res.code === 200 && res.data) ? res.data : [];
+                if (!favs.length) { renderEmpty(); return; }
+                Promise.all(favs.map(f => fetchCard(f.city))).then(cards => {
+                    const valid = cards.filter(Boolean);
+                    if (!valid.length) { renderEmpty(); return; }
+                    AetherCard.render(grid, JSON.stringify(valid));
+                    decorateRemove();
+                });
+            })
+            .catch(renderEmpty);
+    }
+
+    function addCity(name, onDone) {
+        name = (name || '').trim();
+        if (!name) return;
+        fetchCard(name).then(card => {
+            if (!card) { toast('未找到城市「' + name + '」，请换个名称', 'warning'); return; }
+            fetch('/api/favorite/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'city=' + encodeURIComponent(card.city || name) + '&cityCode=' + encodeURIComponent(card.code)
+            }).then(r => r.json()).then(res => {
+                if (res && res.code === 200) { toast('已添加 ' + name, 'success'); loadGrid(); if (onDone) onDone(); }
+                else if (res && res.code === 401) { toast('请先登录', 'warning'); }
+                else { toast((res && res.msg) || '添加失败', 'warning'); loadGrid(); if (onDone) onDone(); }
+            });
+        });
+    }
+
+    // —— Aether 风格内嵌搜索框（替代原生 prompt）——
+    const box = document.getElementById('cityAddBox');
+    const input = document.getElementById('cityAddInput');
+    const goBtn = document.getElementById('cityAddGo');
+    const sug = document.getElementById('cityAddSug');
+    let CITY_LIST = ['北京', '上海', '广州', '深圳', '成都', '杭州', '西安', '武汉', '南京', '重庆',
+        '天津', '苏州', '青岛', '厦门', '三亚', '哈尔滨', '长春', '沈阳', '大连', '昆明',
+        '丽江', '桂林', '拉萨', '乌鲁木齐', '呼和浩特', '长沙', '郑州'];
+
+    function loadCityList() {
+        fetch('/api/aether/cities').then(r => r.json()).then(res => {
+            if (res && res.code === 200 && Array.isArray(res.data) && res.data.length) CITY_LIST = res.data;
+        }).catch(() => {});
+    }
+    function showSug(q) {
+        if (!sug) return;
+        const kw = (q || '').trim();
+        const list = (kw ? CITY_LIST.filter(c => c.indexOf(kw) >= 0) : CITY_LIST).slice(0, 12);
+        if (!list.length) { sug.style.display = 'none'; return; }
+        sug.innerHTML = '<div class="sug-tip">点击或按回车添加</div>'
+            + list.map(c => `<div class="sug" data-city="${c}">${c}</div>`).join('');
+        sug.style.display = 'block';
+        sug.querySelectorAll('.sug').forEach(el =>
+            el.addEventListener('click', () => addCity(el.getAttribute('data-city'), closeBox)));
+    }
+    function openBox() {
+        if (!box) return;
+        box.classList.add('open');
+        if (addBtn) addBtn.style.display = 'none';
+        if (input) { input.focus(); showSug(input.value); }
+    }
+    function closeBox() {
+        if (!box) return;
+        box.classList.remove('open');
+        if (addBtn) addBtn.style.display = '';
+        if (sug) sug.style.display = 'none';
+        if (input) input.value = '';
+    }
+
+    if (addBtn) addBtn.addEventListener('click', openBox);
+    if (goBtn) goBtn.addEventListener('click', () => { if (input && input.value.trim()) addCity(input.value, closeBox); });
+    if (input) {
+        input.addEventListener('input', () => showSug(input.value));
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && input.value.trim()) addCity(input.value, closeBox);
+            else if (e.key === 'Escape') closeBox();
+        });
+    }
+    document.addEventListener('click', e => {
+        const wrap = document.querySelector('.city-add-wrap');
+        if (wrap && !wrap.contains(e.target)) closeBox();
+    });
+    loadCityList();
+    loadGrid();
+}

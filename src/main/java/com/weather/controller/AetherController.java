@@ -6,6 +6,7 @@ import com.weather.entity.SysUser;
 import com.weather.entity.WeatherFavorite;
 import com.weather.service.WeatherCardService;
 import com.weather.service.WeatherFavoriteService;
+import com.weather.util.CityNameGuard;
 import com.weather.util.UserContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -89,10 +90,20 @@ public class AetherController {
         if (city == null || city.trim().isEmpty()) {
             return Result.error("城市名称不能为空");
         }
+        if (CityNameGuard.isProvince(city)) {
+            return Result.error(CityNameGuard.message());
+        }
         Map<String, Object> data = weatherCardService.loadCity(city.trim());
         if (data == null) {
             return Result.error("未能获取「" + city + "」的天气数据");
         }
         return Result.success(data);
+    }
+
+    /** 内置城市名列表，供首页/详情页“添加城市”搜索框联想 */
+    @GetMapping("/api/aether/cities")
+    @ResponseBody
+    public Result<List<String>> cities() {
+        return Result.success(weatherCardService.getCityList());
     }
 }

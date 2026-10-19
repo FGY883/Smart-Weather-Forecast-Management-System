@@ -81,7 +81,7 @@
                     <div class="card-body p-0">
                         <div class="row g-0">
                             <!-- 左侧：温度和天气 -->
-                            <div class="col-md-6 bg-primary text-white p-4 p-md-5">
+                            <div class="col-md-6 aether-hero p-4 p-md-5">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <h2 class="mb-1">
@@ -92,7 +92,7 @@
                                     </div>
                                     <!-- 和风天气标识 -->
                                     <div class="ms-2">
-                                        <span class="badge bg-white bg-opacity-25 text-white rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+                                        <span class="badge aether-soft-badge rounded-pill px-3 py-2">
                                             <i class="bi bi-cloud me-1"></i>和风天气
                                         </span>
                                     </div>
@@ -105,7 +105,7 @@
                                             <i class="bi bi-star-fill me-1"></i>已收藏
                                         </button>
                                         <button th:if="${isFavorited == null or !isFavorited}"
-                                                class="btn btn-outline-light btn-sm rounded-pill" id="favoriteBtn"
+                                                class="btn btn-outline-primary btn-sm rounded-pill" id="favoriteBtn"
                                                 onclick="toggleFavorite(true, this)"
                                                 th:attr="data-city=${currentCity}, data-city-code=${currentCityCode}">
                                             <i class="bi bi-star me-1"></i>收藏
@@ -229,12 +229,27 @@
             </div>
         </div>
 
-        <!-- Aether 城市卡网格（响应式 auto-fill · 7 套场景） -->
+        <!-- Aether 城市卡网格（以“收藏”为数据源，可增删、永久保存到账号） -->
         <div class="mb-4">
-            <h2 class="aether-section-title">Skies &amp; Cities</h2>
-            <p class="aether-section-sub">手绘天空 · 城市天气</p>
+            <div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-1">
+                <div>
+                    <h2 class="aether-section-title mb-0">Skies &amp; Cities</h2>
+                    <p class="aether-section-sub">手绘天空 · 我的城市天气</p>
+                </div>
+                <div class="city-add-wrap">
+                    <div class="city-add-box" id="cityAddBox">
+                        <i class="bi bi-search text-primary"></i>
+                        <input type="text" id="cityAddInput" placeholder="搜索并添加城市，回车确认" autocomplete="off" aria-label="添加城市">
+                        <button type="button" id="cityAddGo" class="btn btn-sm aether-add-btn rounded-3" title="添加"><i class="bi bi-plus-lg me-1"></i>添加</button>
+                    </div>
+                    <button type="button" id="cityAddBtn" class="btn btn-sm rounded-pill aether-add-btn">
+                        <i class="bi bi-plus-lg me-1"></i>添加城市
+                    </button>
+                    <div class="city-add-suggestions" id="cityAddSug" style="display:none"></div>
+                </div>
+            </div>
             <p class="aether-section-tag mb-3">
-                数据源自和风天气 (QWeather) · 每个城市卡片都对应一套独立动态场景
+                这里的城市来自<strong>你的收藏</strong>，可自由增删，<b>永久保存到账号</b>——换设备或重新登录都还在。
             </p>
             <div class="aether-grid" id="cityGrid"></div>
             <footer class="text-center mt-4">
@@ -259,12 +274,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script th:src="@{/js/main.js}"></script>
     <script th:src="@{/js/aether-card.js}"></script>
-    <script th:inline="javascript">
-        (function() {
-            var rawJson = /*[[${cityCardsJson}]]*/ '[]';
-            AetherCard.render(document.getElementById('cityGrid'), rawJson);
-        })();
-    </script>
+    <script>initCityGrid('cityGrid', 'cityAddBtn');</script>
     <script>
         function toggleFavorite(isAdd, btn) {
             if (!requireLogin()) return;
@@ -304,7 +314,7 @@
                 .then(function(res) { return res ? res.json() : null; })
                 .then(function(data) {
                     if (data && data.code === 200) {
-                        btn.className = 'btn btn-outline-light btn-sm rounded-pill';
+                        btn.className = 'btn btn-outline-primary btn-sm rounded-pill';
                         btn.innerHTML = '<i class="bi bi-star me-1"></i>收藏';
                         btn.onclick = function() { toggleFavorite(true, btn); };
                     }

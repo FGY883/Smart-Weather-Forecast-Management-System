@@ -76,9 +76,9 @@
         <div th:if="${realtime != null}" class="row mb-4">
             <div class="col-lg-6 mb-3">
                 <div class="card border-0 shadow-lg rounded-4 h-100">
-                    <div class="card-header bg-primary text-white rounded-top-4 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="bi bi-cloud-sun me-2"></i>实时天气</h5>
-                        <span class="badge bg-white bg-opacity-25 text-white rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+                    <div class="card-header aether-card-header rounded-top-4 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-cloud-sun me-2" style="color:#4A90D9"></i>实时天气</h5>
+                        <span class="badge rounded-pill px-3 py-2" style="font-size: 0.72rem;">
                             <i class="bi bi-cloud me-1"></i>和风天气
                         </span>
                     </div>
@@ -188,13 +188,13 @@
             <!-- 7天预报 -->
             <div class="col-lg-6 mb-3">
                 <div class="card border-0 shadow-lg rounded-4 h-100">
-                    <div class="card-header bg-info text-white rounded-top-4">
-                        <h5 class="mb-0"><i class="bi bi-calendar-week me-2"></i>7天天气预报</h5>
+                    <div class="card-header aether-card-header rounded-top-4">
+                        <h5 class="mb-0"><i class="bi bi-calendar-week me-2" style="color:#17A2B8"></i>7天天气预报</h5>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
                                     <tr>
                                         <th>日期</th>
                                         <th>天气</th>
@@ -229,12 +229,27 @@
             </div>
         </div>
 
-        <!-- Aether 城市卡网格（响应式 auto-fill · 7 套场景） -->
+        <!-- Aether 城市卡网格（以“收藏”为数据源，可增删、永久保存到账号） -->
         <div class="mb-4">
-            <h2 class="aether-section-title">Skies &amp; Cities</h2>
-            <p class="aether-section-sub">手绘天空 · 城市天气</p>
+            <div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-1">
+                <div>
+                    <h2 class="aether-section-title mb-0">Skies &amp; Cities</h2>
+                    <p class="aether-section-sub">手绘天空 · 我的城市天气</p>
+                </div>
+                <div class="city-add-wrap">
+                    <div class="city-add-box" id="cityAddBox">
+                        <i class="bi bi-search text-primary"></i>
+                        <input type="text" id="cityAddInput" placeholder="搜索并添加城市，回车确认" autocomplete="off" aria-label="添加城市">
+                        <button type="button" id="cityAddGo" class="btn btn-sm aether-add-btn rounded-3" title="添加"><i class="bi bi-plus-lg me-1"></i>添加</button>
+                    </div>
+                    <button type="button" id="cityAddBtn" class="btn btn-sm rounded-pill aether-add-btn">
+                        <i class="bi bi-plus-lg me-1"></i>添加城市
+                    </button>
+                    <div class="city-add-suggestions" id="cityAddSug" style="display:none"></div>
+                </div>
+            </div>
             <p class="aether-section-tag mb-3">
-                数据源自和风天气 (QWeather) · 每个城市卡片都对应一套独立动态场景
+                这里的城市来自<strong>你的收藏</strong>，可自由增删，<b>永久保存到账号</b>——换设备或重新登录都还在。
             </p>
             <div class="aether-grid" id="cityGrid"></div>
             <footer class="text-center mt-4">
@@ -262,12 +277,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script th:src="@{/js/main.js}"></script>
     <script th:src="@{/js/aether-card.js}"></script>
-    <script th:inline="javascript">
-        (function() {
-            var rawJson = /*[[${cityCardsJson}]]*/ '[]';
-            AetherCard.render(document.getElementById('cityGrid'), rawJson);
-        })();
-    </script>
+    <script>initCityGrid('cityGrid', 'cityAddBtn');</script>
     <script>
         function toggleFavorite(isAdd, btn) {
             if (!requireLogin()) return;
