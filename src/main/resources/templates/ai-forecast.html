@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${currentCity != null ? currentCity + ' - 7天天气预报' : '7天天气预报'}">7天天气预报 - 智能天气预报系统</title>
+    <title th:text="${currentCity != null ? currentCity + ' - AI预测与7天预报' : 'AI预测与7天预报'}">AI预测与7天预报 - 智能天气预报系统</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link th:href="@{/css/style.css}" rel="stylesheet">
@@ -24,9 +24,9 @@
         <!-- 页面标题 -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3>
-                <i class="bi bi-cloud-sun text-info me-2"></i>
-                <span th:text="${currentCity}">北京</span> - 未来7天天气预报
-                <span class="badge bg-info text-white ms-2">实时</span>
+                <i class="bi bi-cpu text-info me-2"></i>
+                <span th:text="${currentCity}">北京</span> - AI 智能预测与未来7天预报
+                <span class="badge bg-info text-white ms-2">官方 vs AI</span>
             </h3>
             <a th:href="@{/}" class="btn btn-outline-secondary btn-sm rounded-pill">
                 <i class="bi bi-arrow-left me-1"></i>返回首页
@@ -69,39 +69,120 @@
         <!-- 数据来源说明 -->
         <div class="card border-0 shadow-sm rounded-4 mb-4">
             <div class="card-body p-4">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h5 class="mb-2"><i class="bi bi-info-circle text-info me-2"></i>数据来源说明</h5>
-                        <p class="text-muted mb-0">
-                            本页面所有预报数据直接来自<strong>和风天气（QWeather）官方API</strong>的
-                            <code>/v7/weather/7d</code> 接口，实时拉取权威气象机构发布的未来7天天气预报。
-                            数据每日更新，覆盖日期、天气状况、最高/最低气温、湿度、降水量等关键指标，
-                            可作为出行与生活安排的可靠参考。
-                        </p>
+                <h5 class="mb-3"><i class="bi bi-info-circle text-info me-2"></i>本页包含两类数据</h5>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="border rounded-4 p-3 h-100">
+                            <h6 class="text-primary mb-2"><i class="bi bi-cloud-arrow-down me-1"></i>官方预报</h6>
+                            <p class="text-muted small mb-0">
+                                来自<strong>和风天气（QWeather）官方 API</strong> 的
+                                <code>/v7/weather/7d</code> 接口，是权威气象机构发布的未来 7 天数值预报，
+                                在图中以<strong>实线</strong>展示。
+                            </p>
+                        </div>
                     </div>
-                    <div class="col-md-4 text-center">
-                        <i class="bi bi-cloud-arrow-down text-info" style="font-size: 4rem;"></i>
+                    <div class="col-md-6">
+                        <div class="border rounded-4 p-3 h-100">
+                            <h6 class="text-success mb-2"><i class="bi bi-cpu me-1"></i>AI 智能预测（本系统自研）</h6>
+                            <p class="text-muted small mb-0">
+                                基于本站落库的<strong>近 30 天历史数据</strong>，用
+                                <strong>最小二乘线性回归 + 近 7 天加权移动平均</strong>按 <strong>6:4</strong> 融合，
+                                叠加斜率限幅(±0.5℃/天)与均值回复阻尼(0.88ⁱ)抑制外推发散，
+                                并由历史序列方差给出置信度。在图中以<strong>虚线</strong>展示。
+                            </p>
+                        </div>
                     </div>
                 </div>
+                <p class="text-muted small mb-0 mt-3">
+                    <i class="bi bi-lightbulb me-1"></i>对比意义：AI 预测反映该城市<strong>本地近期趋势</strong>，
+                    官方预报反映<strong>气象机构数值模式</strong>；两者偏差越大，通常意味着当前天气越不稳定或处于转折期。
+                    AI 预测在历史数据不足时会自动回退（历史接口补齐 → 7 天预报 → 默认值）。
+                </p>
             </div>
         </div>
 
         <!-- 温度趋势图 -->
         <div th:if="${forecast != null and !forecast.isEmpty()}" class="card border-0 shadow-lg rounded-4 mb-4">
             <div class="card-header bg-gradient text-white rounded-top-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>未来7天温度趋势</h5>
+                <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>AI 预测 vs 官方预报 · 未来7天温度对比</h5>
             </div>
             <div class="card-body p-4">
                 <div id="temperatureChart" style="width: 100%; height: 400px;"></div>
             </div>
         </div>
 
+        <!-- AI 智能预测明细 -->
+        <div th:if="${predictions != null and !predictions.isEmpty()}" class="card border-0 shadow-lg rounded-4 mb-4">
+            <div class="card-header rounded-top-4 d-flex justify-content-between align-items-center"
+                 style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);">
+                <h5 class="mb-0 text-white"><i class="bi bi-cpu me-2"></i>AI 智能预测明细</h5>
+                <span class="badge bg-white bg-opacity-25 text-white rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+                    <i class="bi bi-database me-1"></i>线性回归 + 加权移动平均
+                </span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-center">序号</th>
+                                <th class="text-center">目标日期</th>
+                                <th class="text-center">AI 天气</th>
+                                <th class="text-center">预测最高温</th>
+                                <th class="text-center">预测最低温</th>
+                                <th class="text-center">预测湿度</th>
+                                <th class="text-center">预测降水</th>
+                                <th class="text-center" style="min-width: 140px;">预测置信度</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="pd, iter : ${predictions}">
+                                <td class="text-center" th:text="${iter.count}">1</td>
+                                <td class="text-center fw-bold text-success"
+                                    th:text="${#temporals.format(pd.targetDate, 'yyyy-MM-dd')}">2026-01-07</td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark border rounded-pill px-3 py-2"
+                                          th:text="${pd.weatherPred}">晴</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-danger fw-bold"
+                                          th:text="${pd.tempMaxPred != null ? #numbers.formatDecimal(pd.tempMaxPred, 1, 1) + '°C' : '--'}">28.5°C</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-info fw-bold"
+                                          th:text="${pd.tempMinPred != null ? #numbers.formatDecimal(pd.tempMinPred, 1, 1) + '°C' : '--'}">15.2°C</span>
+                                </td>
+                                <td class="text-center"
+                                    th:text="${pd.humidityPred != null ? pd.humidityPred + '%' : '--'}">65%</td>
+                                <td class="text-center"
+                                    th:text="${pd.precipPred != null ? #numbers.formatDecimal(pd.precipPred, 1, 1) + 'mm' : '0mm'}">0mm</td>
+                                <td class="text-center">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="progress flex-grow-1" style="height: 8px;">
+                                            <div class="progress-bar bg-success" role="progressbar"
+                                                 th:style="'width:' + ${(pd.confidence != null ? pd.confidence.doubleValue() * 100 : 50)} + '%'"
+                                                 th:attr="aria-valuenow=${pd.confidence}"></div>
+                                        </div>
+                                        <span class="small text-muted"
+                                              th:text="${pd.confidence != null ? #numbers.formatPercent(pd.confidence.doubleValue(), 1, 0) : '50%'}">75%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white text-muted small">
+                <i class="bi bi-graph-up-arrow me-1"></i>置信度基于近 30 天历史序列方差估算，越低代表该城市近期天气波动越大、预测越不可靠。
+            </div>
+        </div>
+
         <!-- 7天天气预报详情表格 -->
         <div th:if="${forecast != null and !forecast.isEmpty()}" class="card border-0 shadow-lg rounded-4 mb-4">
             <div class="card-header bg-primary text-white rounded-top-4 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-table me-2"></i>7天天气预报详情</h5>
+                <h5 class="mb-0"><i class="bi bi-table me-2"></i>官方未来7天预报详情</h5>
                 <span class="badge bg-white bg-opacity-25 text-white rounded-pill px-2 py-1" style="font-size: 0.7rem;">
-                    <i class="bi bi-cloud me-1"></i>和风天气 API
+                    <i class="bi bi-cloud me-1"></i>和风天气 API（官方）
                 </span>
             </div>
             <div class="card-body p-0">
@@ -171,121 +252,80 @@
     <script th:src="@{/js/main.js}"></script>
     <script th:inline="javascript">
         (function() {
-            var forecast = [[${forecast}]];
-            if (!forecast || forecast.length === 0) return;
-
+            var forecast = [[${forecast}]] || [];
+            var predictions = [[${predictions}]] || [];
             var chartDom = document.getElementById('temperatureChart');
             if (!chartDom) return;
+            if (forecast.length === 0 && predictions.length === 0) return;
             var myChart = echarts.init(chartDom);
 
-            var dates = [];
-            var maxTemps = [];
-            var minTemps = [];
+            function normDate(d) {
+                if (!d) return '';
+                if (Array.isArray(d)) {
+                    return d[0] + '-' + ('0' + d[1]).slice(-2) + '-' + ('0' + d[2]).slice(-2);
+                }
+                return String(d).substring(0, 10);
+            }
+
+            var offMax = {}, offMin = {}, aiMax = {}, aiMin = {};
             forecast.forEach(function(fc) {
-                // weatherDate 在 Thymeleaf 序列化后是 'yyyy-MM-dd' 字符串或数组，按字符串处理
-                var dateStr = Array.isArray(fc.weatherDate)
-                    ? fc.weatherDate.join('-')
-                    : (fc.weatherDate || '');
-                dates.push(dateStr);
-                maxTemps.push(fc.tempMax != null ? parseFloat(fc.tempMax) : null);
-                minTemps.push(fc.tempMin != null ? parseFloat(fc.tempMin) : null);
+                var k = normDate(fc.weatherDate);
+                if (!k) return;
+                offMax[k] = fc.tempMax != null ? parseFloat(fc.tempMax) : null;
+                offMin[k] = fc.tempMin != null ? parseFloat(fc.tempMin) : null;
+            });
+            predictions.forEach(function(pd) {
+                var k = normDate(pd.targetDate);
+                if (!k) return;
+                aiMax[k] = pd.tempMaxPred != null ? parseFloat(pd.tempMaxPred) : null;
+                aiMin[k] = pd.tempMinPred != null ? parseFloat(pd.tempMinPred) : null;
             });
 
+            var dateSet = {};
+            Object.keys(offMax).concat(Object.keys(aiMax)).forEach(function (k) { dateSet[k] = 1; });
+            var dates = Object.keys(dateSet).sort();
+            function pick(map) { return dates.map(function (d) { return map[d] != null ? map[d] : null; }); }
+
+            var series = [
+                { name: '官方最高温', type: 'line', data: pick(offMax), smooth: true, symbol: 'circle', symbolSize: 8,
+                    lineStyle: { width: 3, color: '#ff6b6b' }, itemStyle: { color: '#ff6b6b' },
+                    areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: 'rgba(255, 107, 107, 0.25)' },
+                        { offset: 1, color: 'rgba(255, 107, 107, 0.03)' } ]) } },
+                { name: '官方最低温', type: 'line', data: pick(offMin), smooth: true, symbol: 'circle', symbolSize: 8,
+                    lineStyle: { width: 3, color: '#4ecdc4' }, itemStyle: { color: '#4ecdc4' } }
+            ];
+            if (predictions.length) {
+                series.push(
+                    { name: 'AI预测最高温', type: 'line', data: pick(aiMax), smooth: true, symbol: 'triangle', symbolSize: 8,
+                        lineStyle: { width: 2, color: '#f39c12', type: 'dashed' }, itemStyle: { color: '#f39c12' } },
+                    { name: 'AI预测最低温', type: 'line', data: pick(aiMin), smooth: true, symbol: 'triangle', symbolSize: 8,
+                        lineStyle: { width: 2, color: '#2980b9', type: 'dashed' }, itemStyle: { color: '#2980b9' } }
+                );
+            }
+
             var option = {
-                title: {
-                    text: '未来7天温度趋势',
-                    subtext: '数据来源：和风天气 QWeather /v7/weather/7d',
-                    left: 'center',
-                    textStyle: { fontSize: 16, fontWeight: 'bold' }
-                },
-                tooltip: {
-                    trigger: 'axis',
-                    formatter: function(params) {
-                        var result = params[0].axisValue + '<br/>';
-                        params.forEach(function(item) {
-                            if (item.value != null) {
-                                result += item.marker + ' ' + item.seriesName + ': ' + item.value + '°C<br/>';
-                            }
-                        });
-                        return result;
-                    }
-                },
-                legend: {
-                    data: ['最高温', '最低温'],
-                    bottom: 10
-                },
-                grid: {
-                    left: '3%',
-                    right: '4%',
-                    bottom: '15%',
-                    top: '20%',
-                    containLabel: true
-                },
-                xAxis: {
-                    type: 'category',
-                    data: dates,
-                    axisLabel: {
-                        formatter: function(val) {
-                            return typeof val === 'string' ? val.substring(5) : val;
-                        }
-                    }
-                },
-                yAxis: {
-                    type: 'value',
-                    name: '温度 (°C)',
-                    axisLabel: {
-                        formatter: '{value}°C'
-                    }
-                },
-                series: [
-                    {
-                        name: '最高温',
-                        type: 'line',
-                        data: maxTemps,
-                        smooth: true,
-                        symbol: 'circle',
-                        symbolSize: 8,
-                        lineStyle: { width: 3, color: '#ff6b6b' },
-                        itemStyle: { color: '#ff6b6b' },
-                        areaStyle: {
-                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                { offset: 0, color: 'rgba(255, 107, 107, 0.3)' },
-                                { offset: 1, color: 'rgba(255, 107, 107, 0.05)' }
-                            ])
-                        },
-                        label: {
-                            show: true,
-                            position: 'top',
-                            formatter: '{c}°C'
-                        }
-                    },
-                    {
-                        name: '最低温',
-                        type: 'line',
-                        data: minTemps,
-                        smooth: true,
-                        symbol: 'circle',
-                        symbolSize: 8,
-                        lineStyle: { width: 3, color: '#4ecdc4' },
-                        itemStyle: { color: '#4ecdc4' },
-                        areaStyle: {
-                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                { offset: 0, color: 'rgba(78, 205, 196, 0.3)' },
-                                { offset: 1, color: 'rgba(78, 205, 196, 0.05)' }
-                            ])
-                        },
-                        label: {
-                            show: true,
-                            position: 'bottom',
-                            formatter: '{c}°C'
-                        }
-                    }
-                ]
+                title: { text: '未来7天温度对比',
+                    subtext: '实线=官方预报(和风)  虚线=AI 预测(本系统)', left: 'center',
+                    textStyle: { fontSize: 16, fontWeight: 'bold' } },
+                tooltip: { trigger: 'axis', formatter: function (params) {
+                    var r = params[0].axisValue + '<br/>';
+                    params.forEach(function (it) { if (it.value != null) r += it.marker + ' ' + it.seriesName + ': ' + it.value + '°C<br/>'; });
+                    return r;
+                } },
+                legend: { data: series.map(function (s) { return s.name; }), bottom: 10 },
+                grid: { left: '3%', right: '4%', bottom: '15%', top: '20%', containLabel: true },
+                xAxis: { type: 'category', data: dates,
+                    axisLabel: { formatter: function (val) { return typeof val === 'string' ? val.substring(5) : val; } } },
+                yAxis: { type: 'value', name: '温度 (°C)', axisLabel: { formatter: '{value}°C' } },
+                series: series
             };
 
             myChart.setOption(option);
-            window.addEventListener('resize', function() {
-                myChart.resize();
+            var rt;
+            window.addEventListener('resize', function () {
+                clearTimeout(rt);
+                rt = setTimeout(function () { myChart.resize(); }, 200);
             });
         })();
     </script>
