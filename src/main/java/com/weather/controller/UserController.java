@@ -74,7 +74,7 @@ public class UserController {
             model.addAttribute("successMsg", "注册成功，请登录");
             return "login";
         }
-        model.addAttribute("errorMsg", "用户名已存在");
+        model.addAttribute("errorMsg", "注册未完成，请更换用户名或稍后重试");
         return "register";
     }
 

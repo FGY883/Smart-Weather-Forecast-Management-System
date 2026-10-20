@@ -51,7 +51,7 @@ public class LlmClient {
         int ms = Math.max(1, timeoutSeconds) * 1000;
         RequestConfig rc = RequestConfig.custom()
                 .setConnectTimeout(ms).setSocketTimeout(ms).setConnectionRequestTimeout(ms).build();
-        this.httpClient = HttpClients.custom().setDefaultRequestConfig(rc).build();
+        this.httpClient = HttpClients.custom().setDefaultRequestConfig(rc).disableAutomaticRetries().build();
     }
 
     public boolean isEnabled() {

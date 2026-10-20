@@ -7,7 +7,6 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
@@ -50,7 +49,33 @@ public class WeatherApiUtil {
     /** 连接/读取超时（毫秒）：外部接口抖动时不能把 Tomcat 线程一直占住 */
     private static final int CONNECT_TIMEOUT = 3000;
     private static final int READ_TIMEOUT = 6000;
-    private static final int MAX_RETRY = 2;
+
+    /** 对 cityCode/location 做 URL 编码，避免路径参数把额外查询参数注入到外部接口请求里。 */
+    private static String enc(String v) {
+        try {
+            return URLEncoder.encode(v == null ? "" : v, "UTF-8");
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    /** 日志脱敏：把 URL 里的 key=/apikey= 值替换为 ***，避免密钥落进日志。 */
+    private static String maskUrl(String url) {
+        if (url == null) return "";
+        return url.replaceAll("(?i)([?&])(key|apikey)=[^&]*", "$1$2=***");
+    }
+
+    /** 安全解析小数：接口偶发空串/缺字段/非数时返回 null，而不是抛异常拖垮整条记录。 */
+    private static BigDecimal dec(String s) {
+        if (s == null || s.trim().isEmpty()) return null;
+        try { return new BigDecimal(s.trim()); } catch (Exception e) { return null; }
+    }
+
+    /** 安全解析整数。 */
+    private static Integer num(String s) {
+        if (s == null || s.trim().isEmpty()) return null;
+        try { return Integer.parseInt(s.trim()); } catch (Exception e) { return null; }
+    }
 
     /**
      * 全局共享的连接池。
@@ -64,7 +89,9 @@ public class WeatherApiUtil {
                     .setConnectionRequestTimeout(CONNECT_TIMEOUT)
                     .setSocketTimeout(READ_TIMEOUT)
                     .build())
-            .setRetryHandler(new DefaultHttpRequestRetryHandler(MAX_RETRY, true))
+            // 关闭自动重试：历史接口按天循环调用，重试会与循环相乘放大（最坏 30×3 次），
+            // 上游抖动时长时间占用线程。单次失败即返回 null，由上层降级处理。
+            .disableAutomaticRetries()
             .build();
 
     /**
@@ -74,7 +101,7 @@ public class WeatherApiUtil {
         try {
             String encodedLocation = URLEncoder.encode(location, "UTF-8");
             String url = geoUrl + "/v2/city/lookup?location=" + encodedLocation + "&key=" + apiKey;
-            log.debug("搜索城市URL: {}", url);
+            log.debug("搜索城市URL: {}", maskUrl(url));
             String resp = doGet(url);
             if (resp != null) {
                 JSONObject json = JSONObject.parseObject(resp);
@@ -100,8 +127,8 @@ public class WeatherApiUtil {
         if (cityCode == null || cityCode.isEmpty()) {
             return null;
         }
-        String url = baseUrl + "/warning/now?location=" + cityCode + "&key=" + apiKey;
-        log.debug("查询灾害预警URL: {}", url);
+        String url = baseUrl + "/warning/now?location=" + enc(cityCode) + "&key=" + apiKey;
+        log.debug("查询灾害预警URL: {}", maskUrl(url));
         String resp = doGet(url);
         if (resp == null) return null;
         try {
@@ -126,7 +153,7 @@ public class WeatherApiUtil {
      */
     public JSONArray fetchAllActiveWarnings() {
         String url = baseUrl + "/warning/list?key=" + apiKey;
-        log.debug("查询全国活跃预警URL: {}", url);
+        log.debug("查询全国活跃预警URL: {}", maskUrl(url));
         String resp = doGet(url);
         if (resp == null) return null;
         try {
@@ -148,8 +175,8 @@ public class WeatherApiUtil {
      * 获取实时天气
      */
     public WeatherData getRealtimeWeather(String cityCode, String cityName) {
-        String url = baseUrl + "/weather/now?location=" + cityCode + "&key=" + apiKey;
-        log.debug("获取实时天气URL: {}", url);
+        String url = baseUrl + "/weather/now?location=" + enc(cityCode) + "&key=" + apiKey;
+        log.debug("获取实时天气URL: {}", maskUrl(url));
         String resp = doGet(url);
         log.debug("实时天气响应: {}", resp);
         if (resp == null) return null;
@@ -164,17 +191,17 @@ public class WeatherApiUtil {
         WeatherData data = new WeatherData();
         data.setCity(cityName);
         data.setCityCode(cityCode);
-        data.setWeatherDate(LocalDate.now());
+        data.setWeatherDate(TimeUtil.today());
         data.setWeatherText(now.getString("text"));
-        data.setTemp(new BigDecimal(now.getString("temp")));
-        data.setFeelsLike(new BigDecimal(now.getString("feelsLike")));
-        data.setHumidity(Integer.parseInt(now.getString("humidity")));
+        data.setTemp(dec(now.getString("temp")));
+        data.setFeelsLike(dec(now.getString("feelsLike")));
+        data.setHumidity(num(now.getString("humidity")));
         data.setWindDir(now.getString("windDir"));
-        data.setWindSpeed(new BigDecimal(now.getString("windSpeed")));
+        data.setWindSpeed(dec(now.getString("windSpeed")));
         data.setWindScale(now.getString("windScale"));
-        data.setPressure(Integer.parseInt(now.getString("pressure")));
-        data.setVisibility(new BigDecimal(now.getString("vis")));
-        data.setPrecip(new BigDecimal(now.getString("precip")));
+        data.setPressure(num(now.getString("pressure")));
+        data.setVisibility(dec(now.getString("vis")));
+        data.setPrecip(dec(now.getString("precip")));
         data.setDataType(1);
         return data;
     }
@@ -183,8 +210,8 @@ public class WeatherApiUtil {
      * 获取7天天气预报
      */
     public List<WeatherData> getForecast7Day(String cityCode, String cityName) {
-        String url = baseUrl + "/weather/7d?location=" + cityCode + "&key=" + apiKey;
-        log.debug("获取7天预报URL: {}", url);
+        String url = baseUrl + "/weather/7d?location=" + enc(cityCode) + "&key=" + apiKey;
+        log.debug("获取7天预报URL: {}", maskUrl(url));
         String resp = doGet(url);
         log.debug("7天预报响应: {}", resp);
         if (resp == null) return null;
@@ -204,14 +231,14 @@ public class WeatherApiUtil {
             data.setCityCode(cityCode);
             data.setWeatherDate(LocalDate.parse(d.getString("fxDate")));
             data.setWeatherText(d.getString("textDay"));
-            data.setTempMax(new BigDecimal(d.getString("tempMax")));
-            data.setTempMin(new BigDecimal(d.getString("tempMin")));
-            data.setHumidity(Integer.parseInt(d.getString("humidity")));
+            data.setTempMax(dec(d.getString("tempMax")));
+            data.setTempMin(dec(d.getString("tempMin")));
+            data.setHumidity(num(d.getString("humidity")));
             data.setWindDir(d.getString("windDirDay"));
-            data.setWindSpeed(new BigDecimal(d.getString("windSpeedDay")));
+            data.setWindSpeed(dec(d.getString("windSpeedDay")));
             data.setWindScale(d.getString("windScaleDay"));
-            data.setPrecip(new BigDecimal(d.getString("precip")));
-            data.setUvIndex(Integer.parseInt(d.getString("uvIndex")));
+            data.setPrecip(dec(d.getString("precip")));
+            data.setUvIndex(num(d.getString("uvIndex")));
             data.setDataType(2);
             list.add(data);
         }
@@ -227,10 +254,10 @@ public class WeatherApiUtil {
         DateTimeFormatter fmt = DateTimeFormatter.BASIC_ISO_DATE;
         // 和风天气历史API每次只能查1天，需要循环调用
         for (int i = 1; i <= days; i++) {
-            LocalDate date = LocalDate.now().minusDays(i);
-            String url = baseUrl + "/historical/weather?location=" + cityCode
+            LocalDate date = TimeUtil.today().minusDays(i);
+            String url = baseUrl + "/historical/weather?location=" + enc(cityCode)
                     + "&date=" + date.format(fmt) + "&key=" + apiKey;
-            log.debug("获取历史天气URL: {}", url);
+            log.debug("获取历史天气URL: {}", maskUrl(url));
             String resp = doGet(url);
             if (resp == null) continue;
 
@@ -252,34 +279,22 @@ public class WeatherApiUtil {
                 data.setCity(cityName);
                 data.setCityCode(cityCode);
                 data.setWeatherDate(date);
-                if (daily.getString("tempMax") != null) {
-                    data.setTempMax(new BigDecimal(daily.getString("tempMax")));
-                }
-                if (daily.getString("tempMin") != null) {
-                    data.setTempMin(new BigDecimal(daily.getString("tempMin")));
-                }
+                data.setTempMax(dec(daily.getString("tempMax")));
+                data.setTempMin(dec(daily.getString("tempMin")));
                 if (data.getTempMax() != null && data.getTempMin() != null) {
                     data.setTemp(data.getTempMax().add(data.getTempMin())
                             .divide(new BigDecimal("2"), 1, RoundingMode.HALF_UP));
                 }
-                if (daily.getString("humidity") != null) {
-                    data.setHumidity(Integer.parseInt(daily.getString("humidity")));
-                }
-                if (daily.getString("precip") != null) {
-                    data.setPrecip(new BigDecimal(daily.getString("precip")));
-                }
-                if (daily.getString("pressure") != null) {
-                    data.setPressure(Integer.parseInt(daily.getString("pressure")));
-                }
+                data.setHumidity(num(daily.getString("humidity")));
+                data.setPrecip(dec(daily.getString("precip")));
+                data.setPressure(num(daily.getString("pressure")));
 
                 // weatherDaily 不含天气文本/风向，取当天最接近正午的小时数据补充
                 JSONObject noon = pickNoonHour(json.getJSONArray("weatherHourly"));
                 if (noon != null) {
                     data.setWeatherText(noon.getString("text"));
                     data.setWindDir(noon.getString("windDir"));
-                    if (noon.getString("windSpeed") != null) {
-                        data.setWindSpeed(new BigDecimal(noon.getString("windSpeed")));
-                    }
+                    data.setWindSpeed(dec(noon.getString("windSpeed")));
                     data.setWindScale(noon.getString("windScale"));
                 }
                 if (data.getWeatherText() == null || data.getWeatherText().isEmpty()) {
@@ -326,7 +341,7 @@ public class WeatherApiUtil {
         try (CloseableHttpResponse response = HTTP_CLIENT.execute(get)) {
             int status = response.getStatusLine().getStatusCode();
             if (status != 200) {
-                log.warn("天气API返回异常状态码: {}, url={}", status, url);
+                log.warn("天气API返回异常状态码: {}, url={}", status, maskUrl(url));
                 return null;
             }
             return EntityUtils.toString(response.getEntity(), "UTF-8");
@@ -354,7 +369,7 @@ public class WeatherApiUtil {
                     + "?apikey=" + weathercnApiKey
                     + "&q=" + encoded
                     + "&language=zh-cn";
-            log.debug("华风城市搜索URL: {}", url);
+            log.debug("华风城市搜索URL: {}", maskUrl(url));
             String resp = doGet(url);
             if (resp == null) return null;
             JSONArray arr = JSONArray.parseArray(resp);
@@ -385,7 +400,7 @@ public class WeatherApiUtil {
                     + "?apikey=" + weathercnApiKey
                     + "&language=zh-cn"
                     + "&details=true";
-            log.debug("华风预警查询URL: {}", url);
+            log.debug("华风预警查询URL: {}", maskUrl(url));
             String resp = doGet(url);
             if (resp == null) return null;
             JSONArray arr = JSONArray.parseArray(resp);

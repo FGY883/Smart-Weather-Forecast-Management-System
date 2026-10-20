@@ -1,15 +1,19 @@
 package com.weather.security;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 登录失败限流。
  *
- * 5 分钟内连续失败 5 次即临时锁定该用户名 10 分钟，
- * 防止演示现场或上线后被暴力破解。
+ * 5 分钟内连续失败 5 次即临时锁定 10 分钟，防止暴力破解。
+ * 计数键为「用户名 + 客户端 IP」，这样攻击者无法仅凭用户名把某个真实用户锁在门外
+ * （锁定只影响同一来源 IP 的尝试），同时仍能挡住单点爆破。
  */
 @Service
 public class LoginAttemptService {
@@ -26,15 +30,34 @@ public class LoginAttemptService {
 
     private final ConcurrentHashMap<String, Counter> counters = new ConcurrentHashMap<>();
 
+    /** 组合键：用户名 + 当前请求 IP（拿不到请求上下文时退化为仅用户名）。 */
+    private String key(String username) {
+        String ip = currentIp();
+        return ip == null ? username : username + "@" + ip;
+    }
+
+    private String currentIp() {
+        try {
+            ServletRequestAttributes attrs =
+                    (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attrs == null) return null;
+            HttpServletRequest req = attrs.getRequest();
+            return req.getRemoteAddr();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     /**
-     * 记录一次失败。返回 true 表示该用户已被锁定（超阈值）。
+     * 记录一次失败。返回 true 表示该来源已被锁定（超阈值）。
      */
     public boolean fail(String username) {
         if (username == null || username.isEmpty()) {
             return false;
         }
         long now = Instant.now().getEpochSecond();
-        Counter c = counters.compute(username, (k, old) -> {
+        String key = key(username);
+        Counter c = counters.compute(key, (k, old) -> {
             if (old == null || now - old.firstAt > WINDOW_SECONDS) {
                 Counter fresh = new Counter();
                 fresh.firstAt = now;
@@ -53,13 +76,13 @@ public class LoginAttemptService {
 
     public boolean isLocked(String username) {
         if (username == null) return false;
-        Counter c = counters.get(username);
+        Counter c = counters.get(key(username));
         return c != null && c.lockedUntil > Instant.now().getEpochSecond();
     }
 
     public void reset(String username) {
         if (username != null) {
-            counters.remove(username);
+            counters.remove(key(username));
         }
     }
 }

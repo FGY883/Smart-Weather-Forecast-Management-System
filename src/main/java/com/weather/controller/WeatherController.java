@@ -5,6 +5,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.weather.entity.*;
 import com.weather.service.*;
 import com.weather.util.CityNameGuard;
+import com.weather.util.TimeUtil;
 import com.weather.util.UserContext;
 import com.weather.util.WeatherApiUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,13 +14,13 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 @Controller
 public class WeatherController {
@@ -27,9 +28,6 @@ public class WeatherController {
     /** 城市卡默认展示的热门城市，全站统一 */
     private static final List<String> DEFAULT_CITIES =
             Arrays.asList("北京", "上海", "广州", "成都", "杭州", "西安");
-
-    /** 统计页可选择的年份跨度 */
-    private static final int YEAR_RANGE = 5;
 
     @Autowired
     private WeatherDataService weatherDataService;
@@ -45,9 +43,6 @@ public class WeatherController {
 
     @Autowired
     private WeatherStatisticsService weatherStatisticsService;
-
-    @Autowired
-    private WeatherCardService weatherCardService;
 
     @Autowired
     private WeatherApiUtil weatherApiUtil;
@@ -88,7 +83,7 @@ public class WeatherController {
         }
         try {
             JSONObject result = weatherApiUtil.searchCity(cityName);
-            String cityCode = firstCityCode(result);
+            String cityCode = firstCityCode(result, cityName);
             if (cityCode != null) {
                 String resolvedName = firstCityName(result, cityName);
                 fillWeatherModel(model, cityCode, resolvedName, user);
@@ -158,7 +153,7 @@ public class WeatherController {
         }
         try {
             JSONObject result = weatherApiUtil.searchCity(cityName);
-            String cityCode = firstCityCode(result);
+            String cityCode = firstCityCode(result, cityName);
             if (cityCode != null) {
                 String resolved = firstCityName(result, cityName);
                 model.addAttribute("forecast", weatherDataService.getForecast7Day(cityCode, resolved));
@@ -179,17 +174,20 @@ public class WeatherController {
     @GetMapping("/weather/statistics/{cityCode}")
     public String statistics(@PathVariable String cityCode,
                              @RequestParam(defaultValue = "北京") String cityName,
-                             @RequestParam(required = false) Integer year,
+                             @RequestParam(required = false) String startMonth,
+                             @RequestParam(required = false) String endMonth,
                              Model model) {
-        fillStatisticsModel(model, cityCode, cityName, year == null ? LocalDate.now().getYear() : year);
+        fillStatisticsModel(model, cityCode, cityName, startMonth, endMonth);
         model.addAttribute("user", userContext.currentUser());
         return "statistics";
     }
 
     @GetMapping("/weather/statistics/search")
     public String statisticsSearch(@RequestParam(required = false) String city,
-                                   @RequestParam(required = false) Integer year,
+                                   @RequestParam(required = false) String startMonth,
+                                   @RequestParam(required = false) String endMonth,
                                    Model model) {
+        model.addAttribute("currentMonth", YearMonth.from(TimeUtil.now()).toString());
         if (city == null || city.trim().isEmpty()) {
             model.addAttribute("statsError", "请输入城市名称");
             model.addAttribute("user", userContext.currentUser());
@@ -203,14 +201,13 @@ public class WeatherController {
         }
         try {
             JSONObject result = weatherApiUtil.searchCity(cityName);
-            String cityCode = firstCityCode(result);
+            String cityCode = firstCityCode(result, cityName);
             if (cityCode == null) {
                 model.addAttribute("statsError", "未找到城市: " + cityName);
                 model.addAttribute("user", userContext.currentUser());
                 return "statistics";
             }
-            fillStatisticsModel(model, cityCode, firstCityName(result, cityName),
-                    year == null ? LocalDate.now().getYear() : year);
+            fillStatisticsModel(model, cityCode, firstCityName(result, cityName), startMonth, endMonth);
         } catch (Exception e) {
             model.addAttribute("statsError", "统计数据获取失败，请稍后重试");
         }
@@ -252,7 +249,7 @@ public class WeatherController {
             model.addAttribute("warnings", warnings);
             model.addAttribute("searchCity", cityName);
         } catch (Exception e) {
-            model.addAttribute("searchError", "查询失败：" + e.getMessage());
+            model.addAttribute("searchError", "预警查询失败，请稍后重试");
             model.addAttribute("warnings", new JSONArray());
         }
         model.addAttribute("hotCities", DEFAULT_CITIES);
@@ -275,7 +272,6 @@ public class WeatherController {
         model.addAttribute("realtime", realtime);
         model.addAttribute("forecast", forecast);
         model.addAttribute("warnings", warnings);
-        model.addAttribute("cityCardsJson", JSONObject.toJSONString(buildCityCards(cityName)));
         model.addAttribute("currentCity", cityName);
         model.addAttribute("currentCityCode", cityCode);
         if (user != null) {
@@ -284,74 +280,81 @@ public class WeatherController {
     }
 
     /**
-     * 城市卡：当前城市优先，其余用固定热门城市补齐 6 张
+     * 统计页数据装配：按"月份区间"查询，并以当前时间为上限截断（未来月份一律不展示）。
+     * 区间缺省为「当前年 1 月 ~ 当前月」。缺失的年份会先按月生成（生成端同样跳过未来月份）。
      */
-    private List<Map<String, Object>> buildCityCards(String primaryCity) {
-        List<String> cities = new ArrayList<>();
-        if (primaryCity != null && !primaryCity.trim().isEmpty()) {
-            cities.add(primaryCity.trim());
-        }
-        for (String c : DEFAULT_CITIES) {
-            if (!cities.contains(c)) {
-                cities.add(c);
-            }
-        }
-        return cities.stream()
-                .limit(6)
-                .map(weatherCardService::loadCity)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-    }
+    private void fillStatisticsModel(Model model, String cityCode, String cityName,
+                                     String startMonth, String endMonth) {
+        YearMonth now = YearMonth.from(TimeUtil.now());
+        YearMonth end = parseMonth(endMonth, now);
+        if (end.isAfter(now)) end = now;                       // 以当前时间为准
+        YearMonth start = parseMonth(startMonth, YearMonth.of(end.getYear(), 1));
+        if (start.isAfter(end)) start = end;                   // 顺序纠正
+        // 封顶：不得早于「当前往前 3 年」，且最多跨 3 个自然年，避免超大区间触发海量生成/外部调用
+        YearMonth floor = now.minusYears(3);
+        if (start.isBefore(floor)) start = floor;
+        if (start.isBefore(end.minusYears(2))) start = end.minusYears(2);
 
-    /**
-     * 统计页数据装配：先取已有统计，缺失时按全年生成（跳过未来月份）
-     */
-    private void fillStatisticsModel(Model model, String cityCode, String cityName, int year) {
+        List<WeatherStatistics> result = new ArrayList<>();
+        int realDays = 0;
         try {
-            List<WeatherStatistics> stats = weatherStatisticsService.getCityStatistics(cityCode, year);
-            if (stats == null || stats.isEmpty()) {
-                generateYearStatistics(cityCode, cityName, year);
-                stats = weatherStatisticsService.getCityStatistics(cityCode, year);
+            for (int y = start.getYear(); y <= end.getYear(); y++) {
+                List<WeatherStatistics> ys = weatherStatisticsService.getCityStatistics(cityCode, y);
+                if (ys == null) ys = new ArrayList<>();
+                Set<Integer> present = new HashSet<>();
+                for (WeatherStatistics s : ys) {
+                    if (s.getStatMonth() != null) present.add(s.getStatMonth());
+                }
+                // 补齐区间内、且不晚于当前月的缺失月份（未来月份永不生成）
+                boolean generated = false;
+                for (int m = 1; m <= 12; m++) {
+                    YearMonth ym = YearMonth.of(y, m);
+                    if (ym.isBefore(start) || ym.isAfter(end) || ym.isAfter(now)) continue;
+                    if (!present.contains(m)) {
+                        try {
+                            weatherStatisticsService.generateMonthlyStatistics(cityCode, cityName, y, m);
+                            generated = true;
+                        } catch (Exception ignored) {
+                            // 单月失败不影响其余月份
+                        }
+                    }
+                }
+                if (generated) {
+                    ys = weatherStatisticsService.getCityStatistics(cityCode, y);
+                    if (ys == null) ys = new ArrayList<>();
+                }
+                for (WeatherStatistics s : ys) {
+                    if (s.getStatYear() == null || s.getStatMonth() == null) continue;
+                    YearMonth sm = YearMonth.of(s.getStatYear(), s.getStatMonth());
+                    if (!sm.isBefore(start) && !sm.isAfter(end) && !sm.isAfter(now)) {
+                        result.add(s);
+                    }
+                }
+                realDays += weatherStatisticsService.countRealDataDays(cityCode, y);
             }
-            int realDays = weatherStatisticsService.countRealDataDays(cityCode, year);
-            model.addAttribute("statistics", stats);
-            model.addAttribute("estimated", realDays < 28);
-            model.addAttribute("realDays", realDays);
         } catch (Exception e) {
             model.addAttribute("statsError", "统计数据获取失败，请稍后重试");
         }
+        model.addAttribute("statistics", result);
+        model.addAttribute("estimated", realDays < 28);
+        model.addAttribute("realDays", realDays);
+        model.addAttribute("startMonth", start.toString());
+        model.addAttribute("endMonth", end.toString());
+        model.addAttribute("currentMonth", now.toString());
         model.addAttribute("currentCity", cityName);
         model.addAttribute("currentCityCode", cityCode);
-        model.addAttribute("year", year);
-        model.addAttribute("years", availableYears(year));
     }
 
-    private void generateYearStatistics(String cityCode, String cityName, int year) {
-        LocalDate now = LocalDate.now();
-        for (int month = 1; month <= 12; month++) {
-            // 当年尚未到来的月份不生成，避免凭空造出"未来统计"
-            if (year > now.getYear() || (year == now.getYear() && month > now.getMonthValue())) {
-                continue;
-            }
-            try {
-                weatherStatisticsService.generateMonthlyStatistics(cityCode, cityName, year, month);
-            } catch (Exception ignored) {
-                // 单月失败不影响其余月份
-            }
+    /** 解析 yyyy-MM（兼容 yyyy-MM-dd）；为空或非法时返回 fallback。 */
+    private YearMonth parseMonth(String v, YearMonth fallback) {
+        if (v == null) return fallback;
+        String s = v.trim();
+        if (s.length() < 7) return fallback;
+        try {
+            return YearMonth.parse(s.substring(0, 7));
+        } catch (Exception e) {
+            return fallback;
         }
-    }
-
-    private List<Integer> availableYears(int current) {
-        int thisYear = LocalDate.now().getYear();
-        List<Integer> years = new ArrayList<>();
-        for (int y = thisYear; y >= thisYear - YEAR_RANGE; y--) {
-            years.add(y);
-        }
-        if (!years.contains(current)) {
-            years.add(current);
-            Collections.sort(years, Collections.reverseOrder());
-        }
-        return years;
     }
 
     /**
@@ -369,20 +372,41 @@ public class WeatherController {
         }
     }
 
-    private String firstCityCode(JSONObject result) {
+    /** 从 geo 查询结果里挑最匹配的一条：优先 name 精确等于查询词，其次 adm1/path 含查询词，最后回退首条。 */
+    private JSONObject bestLocation(JSONObject result, String query) {
         if (result == null || result.getJSONArray("location") == null
                 || result.getJSONArray("location").isEmpty()) {
             return null;
         }
-        return result.getJSONArray("location").getJSONObject(0).getString("id");
+        JSONArray locs = result.getJSONArray("location");
+        String q = query == null ? "" : query.trim();
+        if (!q.isEmpty()) {
+            for (int i = 0; i < locs.size(); i++) {
+                JSONObject o = locs.getJSONObject(i);
+                if (o != null && q.equals(o.getString("name"))) return o;
+            }
+            for (int i = 0; i < locs.size(); i++) {
+                JSONObject o = locs.getJSONObject(i);
+                if (o == null) continue;
+                String path = o.getString("path");
+                String adm1 = o.getString("adm1");
+                if ((path != null && path.contains(q)) || (adm1 != null && adm1.contains(q))) return o;
+            }
+        }
+        return locs.getJSONObject(0);
+    }
+
+    private String firstCityCode(JSONObject result, String query) {
+        JSONObject best = bestLocation(result, query);
+        return best == null ? null : best.getString("id");
     }
 
     private String firstCityName(JSONObject result, String fallback) {
-        if (result == null || result.getJSONArray("location") == null
-                || result.getJSONArray("location").isEmpty()) {
+        JSONObject best = bestLocation(result, fallback);
+        if (best == null) {
             return fallback;
         }
-        String name = result.getJSONArray("location").getJSONObject(0).getString("name");
+        String name = best.getString("name");
         return (name == null || name.isEmpty()) ? fallback : name;
     }
 }

@@ -43,6 +43,9 @@ public class WeatherCache {
 
     private final Map<String, Entry> store = new ConcurrentHashMap<>();
 
+    /** 回源期间的按 key 互斥锁，避免同一 key 并发未命中时多次打外部接口（缓存击穿）。 */
+    private final ConcurrentHashMap<String, Object> loadingLocks = new ConcurrentHashMap<>();
+
     @SuppressWarnings("unchecked")
     public <T> T get(String key, Class<T> type) {
         Entry e = store.get(key);
@@ -63,27 +66,45 @@ public class WeatherCache {
     /**
      * 取缓存，缺失时调用 loader 回源并写回缓存。
      * loader 返回 null 时不写入缓存，避免把失败结果固化住。
+     * 同一 key 的回源串行化：并发未命中时只有一个线程真正调用 loader，其余等待复用结果。
      */
     public <T> T getOrLoad(String key, Class<T> type, Duration ttl, Supplier<T> loader) {
         T cached = get(key, type);
         if (cached != null) {
             return cached;
         }
-        T loaded;
+        Object lock = loadingLocks.computeIfAbsent(key, k -> new Object());
         try {
-            loaded = loader.get();
-        } catch (Exception e) {
-            log.warn("缓存回源失败: key={}, err={}", key, e.getMessage());
-            return null;
+            synchronized (lock) {
+                // 双重检查：拿到锁后再看一次，可能已被前一个线程回填
+                T again = get(key, type);
+                if (again != null) {
+                    return again;
+                }
+                T loaded;
+                try {
+                    loaded = loader.get();
+                } catch (Exception e) {
+                    log.warn("缓存回源失败: key={}, err={}", key, e.getMessage());
+                    return null;
+                }
+                if (loaded != null) {
+                    put(key, loaded, ttl == null ? DEFAULT_TTL : ttl);
+                }
+                return loaded;
+            }
+        } finally {
+            loadingLocks.remove(key, lock);
         }
-        if (loaded != null) {
-            put(key, loaded, ttl == null ? DEFAULT_TTL : ttl);
-        }
-        return loaded;
     }
 
     public void evict(String key) {
         store.remove(key);
+    }
+
+    /** 按前缀清除（例如写库后清掉某城市所有日期区间的 hist: 读缓存）。 */
+    public void evictPrefix(String prefix) {
+        store.keySet().removeIf(k -> k.startsWith(prefix));
     }
 
     public void clear() {

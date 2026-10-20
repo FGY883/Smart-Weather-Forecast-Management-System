@@ -139,7 +139,7 @@ public class CityWeatherService {
 
         StringBuilder sb = new StringBuilder();
         sb.append("【").append(hit.name).append(" · 实时天气");
-        LocalDate date = rt.getWeatherDate() != null ? rt.getWeatherDate() : LocalDate.now();
+        LocalDate date = rt.getWeatherDate() != null ? rt.getWeatherDate() : com.weather.util.TimeUtil.today();
         sb.append("（").append(date).append("）】\n");
         sb.append("天气：").append(nvl(rt.getWeatherText(), "未知"));
         sb.append("，当前温度 ").append(nvl(dec(rt.getTemp()), "—")).append("℃");

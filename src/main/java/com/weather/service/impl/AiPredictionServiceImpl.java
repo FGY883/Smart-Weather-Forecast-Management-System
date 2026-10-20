@@ -9,6 +9,8 @@ import com.weather.service.AiPredictionService;
 import com.weather.service.WeatherDataService;
 import com.weather.util.AiPredictionUtil;
 import com.weather.util.PredictionEvaluator;
+import com.weather.util.RateLimiter;
+import com.weather.util.TimeUtil;
 import com.weather.util.WeatherApiUtil;
 import com.weather.util.WeatherCache;
 import org.slf4j.Logger;
@@ -16,7 +18,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -49,6 +54,20 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
     @Autowired
     private WeatherCache cache;
 
+    @Autowired
+    private RateLimiter rateLimiter;
+
+    @Autowired
+    private PlatformTransactionManager txManager;
+
+    /** 编程式事务：只把"删旧+批量写新"这段纯 DB 操作放进事务，网络调用留在事务外，避免长时间占用连接。 */
+    private TransactionTemplate transactionTemplate;
+
+    @PostConstruct
+    public void init() {
+        this.transactionTemplate = new TransactionTemplate(txManager);
+    }
+
     /** 同一城市当天只生成一次预测，避免每次访问都触发 30 次历史天气接口 */
     private static final Duration PREDICTION_TTL = Duration.ofHours(6);
 
@@ -60,7 +79,7 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
 
     @Override
     public List<AiPrediction> generatePrediction(String cityCode, String cityName) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = TimeUtil.today();
         String cacheKey = "ai:" + cityCode + ":" + today;
 
         // 当天已经算过就直接复用，历史天气接口按天查询，重复生成代价很高
@@ -69,10 +88,11 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
             return cached;
         }
 
-        // 删除该城市今天的旧预测数据
-        remove(new LambdaQueryWrapper<AiPrediction>()
-            .eq(AiPrediction::getCityCode, cityCode)
-            .eq(AiPrediction::getPredictDate, today));
+        // 成本护栏：同一城市 10 分钟内最多重算 2 次，防止枚举 cityCode 反复触发 30 次付费历史接口；
+        // 被限流时返回库中已有预测（可能为空），不做昂贵的补齐。
+        if (!rateLimiter.tryAcquire("predgen:" + cityCode, 2, 600_000L)) {
+            return getLatestPrediction(cityCode);
+        }
 
         // 1. 从数据库查询近30天数据，并按天聚合：
         //    库中同一天可能同时存在实时行（tempMax/tempMin 为 NULL）和多条重复预报行，
@@ -107,18 +127,9 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
 
         List<WeatherData> historyData = new ArrayList<>(byDay.values());
 
-        // 3. 若仍没有足够数据（如接口不可用的新城市），退而使用7天预报作为参考序列
+        // 数据仍不足则如实走默认预测——不再用"未来 7 天预报"冒充历史喂给回归，
+        // 否则 AI 预测会退化成官方预报的再外推，结果具有误导性。
         if (historyData.size() < 3) {
-            log.info("历史数据不足，从和风天气API获取7天预报数据作为参考...");
-            List<WeatherData> forecastData = weatherApiUtil.getForecast7Day(cityCode, cityName);
-            if (forecastData != null && !forecastData.isEmpty()) {
-                weatherDataService.saveOrUpdateData(forecastData);
-                historyData = new ArrayList<>(aggregateByDay(forecastData).values());
-            }
-        }
-
-        // 4. 实在没有数据时使用默认预测
-        if (historyData == null || historyData.size() < 3) {
             log.warn("历史数据不足，使用默认预测");
             return generateDefaultPrediction(cityCode, cityName);
         }
@@ -162,9 +173,23 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
             predictions.add(pred);
         }
 
-        saveBatch(predictions);
+        persistToday(cityCode, today, predictions);
         cache.put(cacheKey, predictions, PREDICTION_TTL);
         return predictions;
+    }
+
+    /**
+     * 原子地替换某城市当天的预测：删旧行 + 批量写新行放在同一事务内，
+     * 避免中途失败导致"旧的已删、新的半写"。事务只覆盖这段纯 DB 操作，网络调用在其之外。
+     */
+    private void persistToday(String cityCode, LocalDate today, final List<AiPrediction> predictions) {
+        transactionTemplate.execute(status -> {
+            remove(new LambdaQueryWrapper<AiPrediction>()
+                .eq(AiPrediction::getCityCode, cityCode)
+                .eq(AiPrediction::getPredictDate, today));
+            saveBatch(predictions);
+            return null;
+        });
     }
 
     /**
@@ -241,7 +266,7 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
 
     @Override
     public List<AiPrediction> getLatestPrediction(String cityCode) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = TimeUtil.today();
         return list(new LambdaQueryWrapper<AiPrediction>()
             .eq(AiPrediction::getCityCode, cityCode)
             .eq(AiPrediction::getPredictDate, today)
@@ -259,7 +284,7 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
         Map<String, Object> cached = cache.get(cacheKey, Map.class);
         if (cached != null) return cached;
 
-        LocalDate end = LocalDate.now().minusDays(1);
+        LocalDate end = TimeUtil.today().minusDays(1);
         LocalDate start = end.minusDays(ACC_HISTORY_DAYS - 1);
         List<WeatherData> raw;
         try {
@@ -269,8 +294,10 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
             raw = new ArrayList<>();
         }
 
-        // 按数据类型拆分：data_type=2 为“历史预报行”(官方) ，其余(1 实况 / 3 历史) 视为“实际值”
-        Map<LocalDate, Double> actualByDate = new HashMap<>();
+        // 按数据类型拆分：data_type=2 为"历史预报行"(官方) ，其余视为"实际值"。
+        // 实际值优先取历史日聚合(3)的当日最高温，缺失时才退回实况(1)各时次的峰值，避免用瞬时值冒充日最高。
+        Map<LocalDate, Double> actualHist = new HashMap<>();
+        Map<LocalDate, Double> actualFallback = new HashMap<>();
         Map<LocalDate, Double> officialByDate = new HashMap<>();
         if (raw != null) {
             for (WeatherData d : raw) {
@@ -282,11 +309,15 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
                 Integer type = d.getDataType();
                 if (type != null && type == 2) {
                     officialByDate.merge(date, v, Math::max);
+                } else if (type != null && type == 3) {
+                    actualHist.merge(date, v, Math::max);
                 } else {
-                    actualByDate.merge(date, v, Math::max);
+                    actualFallback.merge(date, v, Math::max);
                 }
             }
         }
+        Map<LocalDate, Double> actualByDate = new HashMap<>(actualFallback);
+        actualByDate.putAll(actualHist); // 历史日聚合优先覆盖瞬时峰值
 
         List<LocalDate> dates = new ArrayList<>(actualByDate.keySet());
         Collections.sort(dates);
@@ -320,7 +351,7 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
 
     private List<AiPrediction> generateDefaultPrediction(String cityCode, String cityName) {
         List<AiPrediction> predictions = new ArrayList<>();
-        LocalDate today = LocalDate.now();
+        LocalDate today = TimeUtil.today();
         for (int i = 0; i < forecastDays; i++) {
             AiPrediction pred = new AiPrediction();
             pred.setCity(cityName);
@@ -336,7 +367,7 @@ public class AiPredictionServiceImpl extends ServiceImpl<AiPredictionMapper, AiP
             pred.setAlgorithm("default");
             predictions.add(pred);
         }
-        saveBatch(predictions);
+        persistToday(cityCode, today, predictions);
         return predictions;
     }
 }

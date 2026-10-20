@@ -9,6 +9,7 @@ import com.weather.entity.WeatherWarning;
 import com.weather.mapper.WeatherWarningMapper;
 import com.weather.service.WeatherDataService;
 import com.weather.service.WeatherWarningService;
+import com.weather.util.TimeUtil;
 import com.weather.util.WeatherApiUtil;
 import com.weather.util.WeatherCache;
 import org.slf4j.Logger;
@@ -137,7 +138,7 @@ public class WeatherWarningServiceImpl extends ServiceImpl<WeatherWarningMapper,
         // 计数已过期的活跃预警条数，再统一置为无效（IService.update 返回 boolean）
         LambdaQueryWrapper<WeatherWarning> wrapper = new LambdaQueryWrapper<WeatherWarning>()
                 .eq(WeatherWarning::getStatus, 1)
-                .lt(WeatherWarning::getEndTime, LocalDateTime.now());
+                .lt(WeatherWarning::getEndTime, TimeUtil.now());
         int rows = Math.toIntExact(count(wrapper));
         if (rows > 0) {
             WeatherWarning update = new WeatherWarning();
@@ -155,7 +156,7 @@ public class WeatherWarningServiceImpl extends ServiceImpl<WeatherWarningMapper,
         return new LambdaQueryWrapper<WeatherWarning>()
                 .eq(WeatherWarning::getStatus, 1)
                 .and(w -> w.isNull(WeatherWarning::getEndTime)
-                          .or().gt(WeatherWarning::getEndTime, LocalDateTime.now()))
+                          .or().gt(WeatherWarning::getEndTime, TimeUtil.now()))
                 .orderByDesc(WeatherWarning::getCreateTime);
     }
 
@@ -165,7 +166,7 @@ public class WeatherWarningServiceImpl extends ServiceImpl<WeatherWarningMapper,
                 .eq(WeatherWarning::getWarningType, type)
                 .eq(WeatherWarning::getStatus, 1)
                 .and(w -> w.isNull(WeatherWarning::getEndTime)
-                          .or().gt(WeatherWarning::getEndTime, LocalDateTime.now()))) > 0;
+                          .or().gt(WeatherWarning::getEndTime, TimeUtil.now()))) > 0;
     }
 
     private WeatherWarning createWarning(String cityCode, String cityName, String type, String level, String title, String content) {
@@ -176,8 +177,8 @@ public class WeatherWarningServiceImpl extends ServiceImpl<WeatherWarningMapper,
         warning.setWarningLevel(level);
         warning.setWarningTitle(title);
         warning.setWarningContent(content);
-        warning.setStartTime(LocalDateTime.now());
-        warning.setEndTime(LocalDateTime.now().plusDays(1));
+        warning.setStartTime(TimeUtil.now());
+        warning.setEndTime(TimeUtil.now().plusDays(1));
         warning.setStatus(1);
         return warning;
     }
@@ -191,10 +192,12 @@ public class WeatherWarningServiceImpl extends ServiceImpl<WeatherWarningMapper,
             return cached;
         }
         JSONArray fresh = weatherApiUtil.fetchActiveWarnings(cityCode);
-        // API 调用失败时返回空数组而不是 null，避免页面上看到一堆报错
-        JSONArray result = fresh != null ? fresh : new JSONArray();
-        cache.put(key, result, WARNING_TTL);
-        return result;
+        // 接口失败(null)时返回空但不写缓存，避免把"暂无预警"缓存住而隐藏真实预警 WARNING_TTL 时长
+        if (fresh == null) {
+            return new JSONArray();
+        }
+        cache.put(key, fresh, WARNING_TTL);
+        return fresh;
     }
 
     @Override
@@ -205,9 +208,11 @@ public class WeatherWarningServiceImpl extends ServiceImpl<WeatherWarningMapper,
             return cached;
         }
         JSONArray fresh = weatherApiUtil.fetchAllActiveWarnings();
-        JSONArray result = fresh != null ? fresh : new JSONArray();
-        cache.put(key, result, WARNING_TTL);
-        return result;
+        if (fresh == null) {
+            return new JSONArray();
+        }
+        cache.put(key, fresh, WARNING_TTL);
+        return fresh;
     }
 
     @Override
@@ -226,6 +231,9 @@ public class WeatherWarningServiceImpl extends ServiceImpl<WeatherWarningMapper,
             return new JSONArray();
         }
         JSONArray raw = weatherApiUtil.fetchAlertsWeathercn(locationKey);
+        if (raw == null) {
+            return new JSONArray();   // 失败不缓存，避免隐藏真实预警
+        }
         JSONArray result = normalizeWeathercnAlerts(raw);
         cache.put(key, result, WARNING_TTL);
         return result;

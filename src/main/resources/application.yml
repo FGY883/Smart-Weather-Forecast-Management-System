@@ -7,6 +7,11 @@ server:
     # 会话超时：默认 30 分钟会导致登录后隔一会儿被登出，延长到 8 小时贴合演示
     session:
       timeout: 8h
+      cookie:
+        http-only: true
+        same-site: lax
+        # 生产启用 HTTPS 后置为 true（SECURE）；本地 http 下保持 false，否则会话 Cookie 会被浏览器丢弃
+        secure: ${COOKIE_SECURE:false}
 
 spring:
   application:
@@ -16,7 +21,9 @@ spring:
     include: local
   sql:
     init:
-      mode: ${SQL_INIT_MODE:always}
+      # 默认不自动执行 schema/data.sql，避免对着非一次性数据库每次启动重跑建表/插数。
+      # 本地开发在 application-local.yml 里显式置为 always；生产用 --spring.sql.init.mode 控制。
+      mode: ${SQL_INIT_MODE:never}
       schema-locations: classpath:sql/schema.sql
       data-locations: classpath:sql/data.sql
       continue-on-error: true
@@ -35,7 +42,8 @@ spring:
     # 配合建库/建表使用 utf8mb4 即可正常存储中文。
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:weather_forecast}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: ${DB_USER:root}
-    password: ${DB_PASSWORD:123456}
+    # 不再内置弱默认口令；本地在 application-local.yml 提供，生产用环境变量 DB_PASSWORD 注入。
+    password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 10
@@ -87,6 +95,10 @@ ai:
     wind-threshold: 8
 
 logging:
+  # 固定日志字符集为 UTF-8：Windows 下 JVM 默认 GBK 会让含中文的日志乱码、跨平台不可读
+  charset:
+    console: UTF-8
+    file: UTF-8
   level:
     root: info
     com.weather: info

@@ -20,7 +20,7 @@ public class PushRecordServiceImpl extends ServiceImpl<PushRecordMapper, PushRec
         record.setPushType("DAILY_WEATHER");
         record.setPushContent(content);
         record.setPushStatus(1);
-        record.setPushTime(LocalDateTime.now());
+        record.setPushTime(com.weather.util.TimeUtil.now());
         save(record);
     }
 
@@ -31,7 +31,7 @@ public class PushRecordServiceImpl extends ServiceImpl<PushRecordMapper, PushRec
         record.setPushType("WARNING");
         record.setPushContent(content);
         record.setPushStatus(1);
-        record.setPushTime(LocalDateTime.now());
+        record.setPushTime(com.weather.util.TimeUtil.now());
         save(record);
     }
 

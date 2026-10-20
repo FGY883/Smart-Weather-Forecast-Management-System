@@ -7,6 +7,7 @@ import com.weather.entity.WeatherStatistics;
 import com.weather.mapper.WeatherStatisticsMapper;
 import com.weather.service.WeatherDataService;
 import com.weather.service.WeatherStatisticsService;
+import com.weather.util.TimeUtil;
 import com.weather.util.WeatherApiUtil;
 import com.weather.util.WeatherCache;
 import org.slf4j.Logger;
@@ -173,26 +174,30 @@ public class WeatherStatisticsServiceImpl extends ServiceImpl<WeatherStatisticsM
     public void generateMonthlyStatistics(String cityCode, String cityName, int year, int month) {
         LocalDate start = LocalDate.of(year, month, 1);
         LocalDate end = start.plusMonths(1).minusDays(1);
-        List<WeatherData> dataList = weatherDataService.getHistoryData(cityCode, start, end);
+        // 关键修复：按自然日去重后再统计，避免同一日被实况(每小时)+预报(每轮重复保存)多行导致
+        // 降水量与晴/云/雨天数被成倍累加（曾出现 5 月 63 行/7 天 → 152mm、天数合计 56>31）。
+        List<WeatherData> days = dedupByDay(weatherDataService.getHistoryData(cityCode, start, end));
 
         WeatherStatistics stats;
 
-        // 如果有足够的真实数据，使用真实数据计算
-        if (dataList != null && dataList.size() >= 5) {
-            stats = calculateFromRealData(cityCode, cityName, year, month, dataList);
-            log.info("使用真实数据生成统计: {}-{}-{}, 数据条数: {}", cityName, year, month, dataList.size());
-        } else {
-            // 尝试从API获取7天预报数据作为参考
+        // 如果有足够的真实数据（按去重后的自然天数判断），使用真实数据计算
+        if (days.size() >= 5) {
+            stats = calculateFromRealData(cityCode, cityName, year, month, days);
+            log.info("使用真实数据生成统计: {}-{}-{}, 实测{}天", cityName, year, month, days.size());
+        } else if (isCurrentMonth(year, month)) {
+            // 仅当前月且实测不足时，才尝试用 7 天预报补齐（过去月份不再做无谓的回源/外推）
             List<WeatherData> forecastData = getForecastDataForReference(cityCode, cityName);
-            if (forecastData != null && !forecastData.isEmpty() && isCurrentMonth(year, month)) {
-                // 当前月份使用预报数据
+            if (forecastData != null && !forecastData.isEmpty()) {
                 stats = calculateFromForecastData(cityCode, cityName, year, month, forecastData);
                 log.info("使用7天预报数据生成统计: {}-{}-{}", cityName, year, month);
             } else {
-                // 其他月份使用气候常理数据
                 stats = generateFromClimateNormal(cityCode, cityName, year, month);
                 log.info("使用气候常理数据生成统计: {}-{}-{}", cityName, year, month);
             }
+        } else {
+            // 过去的月份实测不足：用气候常理数据
+            stats = generateFromClimateNormal(cityCode, cityName, year, month);
+            log.info("使用气候常理数据生成统计: {}-{}-{}", cityName, year, month);
         }
 
         saveOrUpdate(stats, new LambdaQueryWrapper<WeatherStatistics>()
@@ -203,6 +208,37 @@ public class WeatherStatisticsServiceImpl extends ServiceImpl<WeatherStatisticsM
         cache.evict(statsCacheKey(cityCode, year));
     }
 
+    /**
+     * 按自然日去重，同一天多行时取来源优先级最高的一条：历史(3) &gt; 预报(2) &gt; 实况(1)。
+     * 历史为真实日聚合值，预报含当日最高/最低/降水，实况是瞬时值——优先级保证降水量不被瞬时值虚增。
+     */
+    private List<WeatherData> dedupByDay(List<WeatherData> rows) {
+        List<WeatherData> result = new ArrayList<>();
+        if (rows == null) return result;
+        Map<LocalDate, WeatherData> best = new LinkedHashMap<>();
+        for (WeatherData d : rows) {
+            LocalDate day = d.getWeatherDate();
+            if (day == null) continue;
+            WeatherData cur = best.get(day);
+            if (cur == null || sourceRank(d) > sourceRank(cur)) {
+                best.put(day, d);
+            }
+        }
+        result.addAll(best.values());
+        return result;
+    }
+
+    private int sourceRank(WeatherData d) {
+        Integer t = d.getDataType();
+        if (t == null) return 0;
+        switch (t) {
+            case 3: return 3; // 历史（真实日聚合）
+            case 2: return 2; // 预报（日级）
+            case 1: return 1; // 实况（瞬时）
+            default: return 0;
+        }
+    }
+
     private String statsCacheKey(String cityCode, int year) {
         return "stats:" + cityCode + ":" + year;
     }
@@ -211,19 +247,20 @@ public class WeatherStatisticsServiceImpl extends ServiceImpl<WeatherStatisticsM
      * 判断是否是当前月份
      */
     private boolean isCurrentMonth(int year, int month) {
-        LocalDate now = LocalDate.now();
+        LocalDate now = TimeUtil.today();
         return now.getYear() == year && now.getMonthValue() == month;
     }
 
     /**
-     * 从API获取7天预报数据作为参考
+     * 从API获取7天预报数据作为参考（按自然日去重后返回，最多 7 天）
      */
     private List<WeatherData> getForecastDataForReference(String cityCode, String cityName) {
         try {
             // 先检查数据库中是否已有预报数据
-            LocalDate today = LocalDate.now();
-            List<WeatherData> existingData = weatherDataService.getHistoryData(cityCode, today, today.plusDays(7));
-            if (existingData != null && existingData.size() >= 5) {
+            LocalDate today = TimeUtil.today();
+            List<WeatherData> existingData = dedupByDay(
+                    weatherDataService.getHistoryData(cityCode, today, today.plusDays(7)));
+            if (existingData.size() >= 5) {
                 return existingData;
             }
 
@@ -231,7 +268,7 @@ public class WeatherStatisticsServiceImpl extends ServiceImpl<WeatherStatisticsM
             List<WeatherData> forecast = weatherApiUtil.getForecast7Day(cityCode, cityName);
             if (forecast != null && !forecast.isEmpty()) {
                 weatherDataService.saveOrUpdateData(forecast);
-                return forecast;
+                return dedupByDay(forecast);
             }
         } catch (Exception e) {
             log.warn("获取7天预报数据失败: {}", e.getMessage());
@@ -249,7 +286,7 @@ public class WeatherStatisticsServiceImpl extends ServiceImpl<WeatherStatisticsM
         BigDecimal humiditySum = BigDecimal.ZERO;
         BigDecimal precipSum = BigDecimal.ZERO;
         int rainDays = 0, sunnyDays = 0, cloudyDays = 0;
-        int count = forecastData.size();
+        int count = Math.max(1, forecastData.size()); // 防除零（正常路径已保证非空）
 
         for (WeatherData d : forecastData) {
             // 计算平均温度
@@ -277,10 +314,8 @@ public class WeatherStatisticsServiceImpl extends ServiceImpl<WeatherStatisticsM
             }
         }
 
-        // 基于7天数据推算整月数据
-        int daysInMonth = LocalDate.of(year, month, 1).lengthOfMonth();
-        double scale = (double) daysInMonth / count;
-
+        // 不再把 7 天数据线性放大成整月（那会虚增降水量与各类天数）。
+        // 当前月只按已有预报/实测天数如实汇总，未覆盖的天不计入。
         WeatherStatistics stats = new WeatherStatistics();
         stats.setCity(cityName);
         stats.setCityCode(cityCode);
@@ -290,10 +325,10 @@ public class WeatherStatisticsServiceImpl extends ServiceImpl<WeatherStatisticsM
         stats.setMaxTemp(maxTemp);
         stats.setMinTemp(minTemp);
         stats.setAvgHumidity(humiditySum.divide(new BigDecimal(count), 1, RoundingMode.HALF_UP));
-        stats.setTotalPrecip(precipSum.multiply(new BigDecimal(scale)).setScale(1, RoundingMode.HALF_UP));
-        stats.setRainDays((int) Math.round(rainDays * scale));
-        stats.setSunnyDays((int) Math.round(sunnyDays * scale));
-        stats.setCloudyDays((int) Math.round(cloudyDays * scale));
+        stats.setTotalPrecip(precipSum.setScale(1, RoundingMode.HALF_UP));
+        stats.setRainDays(rainDays);
+        stats.setSunnyDays(sunnyDays);
+        stats.setCloudyDays(cloudyDays);
 
         return stats;
     }
@@ -308,7 +343,7 @@ public class WeatherStatisticsServiceImpl extends ServiceImpl<WeatherStatisticsM
         BigDecimal humiditySum = BigDecimal.ZERO;
         BigDecimal precipSum = BigDecimal.ZERO;
         int rainDays = 0, sunnyDays = 0, cloudyDays = 0;
-        int count = dataList.size();
+        int count = Math.max(1, dataList.size()); // 防除零（正常路径已保证 ≥5 天）
 
         for (WeatherData d : dataList) {
             if (d.getTemp() != null) {
@@ -424,7 +459,8 @@ public class WeatherStatisticsServiceImpl extends ServiceImpl<WeatherStatisticsM
         }
         Set<LocalDate> days = new HashSet<>();
         for (WeatherData d : data) {
-            if (d.getWeatherDate() != null) {
+            // 仅计真实观测（历史/实况），排除预报(data_type=2)，避免未来预报虚增"实测天数"
+            if (d.getWeatherDate() != null && (d.getDataType() == null || d.getDataType() != 2)) {
                 days.add(d.getWeatherDate());
             }
         }

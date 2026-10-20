@@ -7,7 +7,11 @@ import com.weather.mapper.WeatherDataMapper;
 import com.weather.service.WeatherDataService;
 import com.weather.util.WeatherApiUtil;
 import com.weather.util.WeatherCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -16,6 +20,8 @@ import java.util.List;
 
 @Service
 public class WeatherDataServiceImpl extends ServiceImpl<WeatherDataMapper, WeatherData> implements WeatherDataService {
+
+    private static final Logger log = LoggerFactory.getLogger(WeatherDataServiceImpl.class);
 
     /** 实况变化快，缓存 10 分钟；预报一天内基本不变，缓存 30 分钟 */
     private static final Duration REALTIME_TTL = Duration.ofMinutes(10);
@@ -109,24 +115,53 @@ public class WeatherDataServiceImpl extends ServiceImpl<WeatherDataMapper, Weath
     }
 
     /**
-     * 同城市同日期同类型只保留一行：已存在就更新，避免重复堆积
+     * 同城市同日期同类型只保留一行：已存在就更新，避免重复堆积。
+     * 关键修复：
+     *  - 对入参做副本再落库，绝不把数据库 id 回写进调用方（可能是缓存里的）对象，避免跨请求污染；
+     *  - 并发下两个线程同时"查不到→插入"会撞唯一索引，捕获 DuplicateKeyException 后转为更新，避免静默丢数据；
+     *  - 写库成功后清掉该城市的 hist: 读缓存，保证统计/回测读到最新数据。
      */
     private void saveOrUpdateOne(WeatherData data) {
+        if (data == null || data.getCityCode() == null || data.getWeatherDate() == null) {
+            return;
+        }
+        WeatherData row = new WeatherData();
+        BeanUtils.copyProperties(data, row);
+        row.setId(null);
         try {
-            LambdaQueryWrapper<WeatherData> q = new LambdaQueryWrapper<WeatherData>()
-                    .eq(WeatherData::getCityCode, data.getCityCode())
-                    .eq(WeatherData::getWeatherDate, data.getWeatherDate())
-                    .eq(WeatherData::getDataType, data.getDataType())
-                    .last("LIMIT 1");
-            WeatherData exist = getOne(q);
+            WeatherData exist = findExisting(row);
             if (exist != null) {
-                data.setId(exist.getId());
-                updateById(data);
+                row.setId(exist.getId());
+                updateById(row);
             } else {
-                save(data);
+                save(row);
+            }
+            cache.evictPrefix("hist:" + row.getCityCode() + ":");
+        } catch (DuplicateKeyException dup) {
+            // 并发插入冲突：改为更新既有行
+            try {
+                WeatherData exist = findExisting(row);
+                if (exist != null) {
+                    row.setId(exist.getId());
+                    updateById(row);
+                }
+                cache.evictPrefix("hist:" + row.getCityCode() + ":");
+            } catch (Exception ignore) {
+                log.warn("天气数据并发写库失败(转更新仍失败): city={}, date={}, type={}",
+                        row.getCityCode(), row.getWeatherDate(), row.getDataType());
             }
         } catch (Exception e) {
-            // 写库失败不应影响页面展示
+            // 写库失败不应影响页面展示，但要留痕，避免数据完整性被悄悄破坏
+            log.warn("天气数据写库失败: city={}, date={}, type={}, err={}",
+                    row.getCityCode(), row.getWeatherDate(), row.getDataType(), e.getMessage());
         }
+    }
+
+    private WeatherData findExisting(WeatherData row) {
+        return getOne(new LambdaQueryWrapper<WeatherData>()
+                .eq(WeatherData::getCityCode, row.getCityCode())
+                .eq(WeatherData::getWeatherDate, row.getWeatherDate())
+                .eq(WeatherData::getDataType, row.getDataType())
+                .last("LIMIT 1"));
     }
 }

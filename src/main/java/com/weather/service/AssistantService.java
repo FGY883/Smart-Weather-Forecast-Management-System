@@ -118,13 +118,13 @@ public class AssistantService {
                     for (int i = start; i < history.size(); i++) {
                         Map<String, String> h = history.get(i);
                         String role = h.get("role");
-                        String content = h.get("content");
+                        String content = clip(h.get("content"), 500);   // 限制历史单条长度，控输入 token
                         if (("user".equals(role) || "assistant".equals(role)) && content != null && !content.isEmpty()) {
                             messages.add(msg(role, content));
                         }
                     }
                 }
-                messages.add(msg("user", question == null ? "" : question));
+                messages.add(msg("user", clip(question, 1000)));        // 用户问题限长，防超长输入放大计费
                 String reply = llmClient.chat(messages);
 
                 Map<String, Object> out = new LinkedHashMap<>();
@@ -192,6 +192,12 @@ public class AssistantService {
         map.put("role", role);
         map.put("content", content);
         return map;
+    }
+
+    /** 截断过长文本，限制进入大模型的输入 token。 */
+    private static String clip(String s, int max) {
+        if (s == null) return null;
+        return s.length() <= max ? s : s.substring(0, max);
     }
 
     private static final class Match {

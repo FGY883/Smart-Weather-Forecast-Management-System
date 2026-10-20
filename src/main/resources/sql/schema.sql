@@ -67,7 +67,9 @@ CREATE TABLE IF NOT EXISTS `ai_prediction` (
     `algorithm` VARCHAR(50) DEFAULT 'linear_regression' COMMENT '预测算法',
     `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     PRIMARY KEY (`id`),
-    KEY `idx_city_target` (`city_code`, `target_date`)
+    UNIQUE KEY `uk_city_predict_target` (`city_code`, `predict_date`, `target_date`),
+    KEY `idx_city_target` (`city_code`, `target_date`),
+    KEY `idx_city_predict` (`city_code`, `predict_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI预测结果表';
 
 -- 4. 极端天气预警表
@@ -87,7 +89,7 @@ CREATE TABLE IF NOT EXISTS `weather_warning` (
     KEY `idx_city_status` (`city_code`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='极端天气预警表';
 
--- 5. 用户预警通知表
+-- 5. 用户预警通知表（预留：当前预警通过收藏城市实时查询展示，尚未做"逐用户落库通知+已读"链路）
 CREATE TABLE IF NOT EXISTS `user_warning_notice` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT 'ID',
     `user_id` BIGINT NOT NULL COMMENT '用户ID',
