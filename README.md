@@ -142,12 +142,24 @@ src/main/resources/
 
 - **密码**：BCrypt 加密存储。
 - **CSRF**：默认开启；表单由 Thymeleaf 自动携带令牌，`fetch` 的 POST 经统一注入 `X-XSRF-TOKEN` 头；退出登录为 **POST**。
-- **登录防爆破**：5 分钟内失败 5 次锁定 10 分钟，且**认证前**即校验锁定（跳过口令校验）；登录失败原因不泄露账号存在性。
-- **会话**：超时延长至 **8h**（`server.servlet.session.timeout`，避免演示中途掉登录）；同一账号单点会话（`maximumSessions(1)` + `SessionRegistry`，配置已去重，新登录会挤掉旧会话）。
-- **接口限流**：`/api/prediction/generate` 6 次/分、`/api/assistant/chat` 30 次/分（按用户）。
-- **XSS**：注入 `<script>` 的 JSON 对 `</` 转义；前端动态渲染统一转义。
-- **密钥治理**：DB/天气/大模型密钥一律 `${ENV}` 占位，真实值仅存于 **gitignore 的 `application-local.yml`** 或环境变量；生产 `application-prod.yml` 关闭自动建表（`sql.init.mode=never`）。
+- **登录防爆破**：5 分钟内失败 5 次锁定 10 分钟，且**认证前**即校验锁定（跳过口令校验）；锁定键为「用户名 + 客户端 IP」，避免仅凭用户名把他人锁在门外；登录失败原因不泄露账号存在性。
+- **会话**：超时延长至 **8h**（`server.servlet.session.timeout`，避免演示中途掉登录）；同一账号单点会话（`maximumSessions(1)` + `SessionRegistry`，配置已去重，新登录会挤掉旧会话）；会话 Cookie `HttpOnly + SameSite=Lax`，`Secure` 随 `COOKIE_SECURE` 在 HTTPS 下开启。
+- **接口限流**：`/api/prediction/generate` 6 次/分、`/api/assistant/chat` 30 次/分（按用户）；`/api/aether/weather` 30 次/分（按 IP，仅本机反代后才采信 X-Forwarded-For）；`generatePrediction` 源头按城市 10 分钟冷却，页面与 API 均覆盖，防止枚举 cityCode 刷爆付费历史接口。
+- **XSS**：注入 `<script>` 的 JSON 对 `</` 转义；前端动态渲染统一转义，`showToast`/城市联想改用 `textContent`/DOM 赋值。
+- **密钥治理**：DB/天气/大模型密钥一律 `${ENV}` 占位（DB 口令无内置默认值），真实值仅存于 **gitignore 的 `application-local.yml`** 或环境变量；外部 API 的 URL 日志经 `key=***` 脱敏，不落密钥；生产 `application-prod.yml` 关闭自动建表（`sql.init.mode=never`）。
 - **异常**：`GlobalExceptionHandler` 页面返回错误视图、`/api` 返回统一 JSON，不外泄堆栈。
+
+### 🧯 数据完整性与健壮性整改（代码审查后）
+
+经三轮分级审查（P0–P3 + F1–F20）并端到端验证后修复：
+
+- **统计按自然日去重**：月度聚合先按 `weather_date` 去重（优先 历史3 > 预报2 > 实况1），修复"每小时实况 + 反复保存的 7 天预报"导致同一日多行被重复累加——北京 5 月降水由 **152mm → 19mm**、晴+云+雨由 56>31 修正为 ≤ 月长；`countRealDataDays` 排除预报行。
+- **统计月份区间封顶到当月**：`startMonth/endMonth` 查询，`end` 截断到当前月、最多跨 3 个自然年，未来月份一律不展示（含清除历史脏行）。
+- **事务与并发**：预测"删旧+批量写新"用 `TransactionTemplate` 原子化；`saveOrUpdateOne` 副本落库 + 捕获 `DuplicateKeyException` 转更新；`WeatherCache.getOrLoad` 按 key 加锁防击穿；写库后清 `hist:` 缓存。`ai_prediction` 加唯一键 `(city_code,predict_date,target_date)`。
+- **外部调用**：HTTP 客户端关闭自动重试（避免与按天循环相乘放大）；实况/预报/历史字段全部安全解析（缺字段降级不炸整条）；地理编码优先精确名匹配而非固定取首条；预警接口失败不再缓存空数组。
+- **AI 预测**：不再用"未来 7 天预报"冒充历史喂回归；回测"实测日最高温"优先历史日聚合；LLM 输入按长度裁剪控成本。
+- **一致性**：时间统一走 `TimeUtil`（Asia/Shanghai）；日志字符集固定 UTF-8（修复 Windows GBK 乱码）。
+- **部署假设**：进程内缓存/限流/登录锁定/定时任务为**单实例**实现，多实例需 Redis/`@SchedulerLock`（见"质量与已知说明"）。
 
 ---
 
@@ -157,7 +169,7 @@ src/main/resources/
 |----|------|----------|
 | `sys_user` | 用户账号 | 用户名唯一 |
 | `weather_data` | 实况/预报/历史天气 | **唯一键 `(city_code, weather_date, data_type)`** 防重复入库 |
-| `ai_prediction` | AI 预测结果 | 预测日期 + 城市 |
+| `ai_prediction` | AI 预测结果 | **唯一键 `(city_code, predict_date, target_date)`** 防并发重复 |
 | `weather_warning` | 灾害预警 | 城市 + 类型去重、`status`/`end_time` 过期 |
 | `weather_favorite` | 城市收藏 | `(user_id, city_code)` 唯一 |
 | `push_record` | 推送历史 | 用户 + 类型 + 状态 |
@@ -192,11 +204,11 @@ src/main/resources/
 
 | 环境变量 | 用途 |
 |----------|------|
-| `DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD` | MySQL 连接 |
+| `DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD` | MySQL 连接（`DB_PASSWORD` 无内置默认值，本地写在 gitignore 的 `application-local.yml`，生产用环境变量注入） |
 | `WEATHER_API_KEY` | 和风天气 Key |
 | `WEATHERCN_API_KEY` | 华风爱科预警 Key |
 | `LLM_ENABLED / LLM_BASE_URL / LLM_API_KEY / LLM_MODEL / LLM_MAX_TOKENS` | 助手大模型（默认 `mimo-v2.6-flash`） |
-| `SQL_INIT_MODE` | 建表脚本模式（prod 建议 `never`） |
+| `SQL_INIT_MODE` | 建表脚本模式，**默认 `never`**（避免对着真实库每次启动重跑）；本地开发在 `application-local.yml` 置 `always` |
 
 > 未配置大模型 Key 时助手自动降级为**离线检索式问答**，仍可演示。
 
@@ -259,6 +271,8 @@ mvn spring-boot:run
 - ⚠️ 助手为**大模型 + RAG**，无外网/密钥时回退本地知识库；城市天气支持内置目录与地理编码可解析城市。
 - ⚠️ Spring Boot 2.7.18 / JDK8 生命周期偏旧（毕业设计场景可接受，论文可注明）。
 - ⚠️ 前端 CDN（Bootstrap/ECharts/图标/字体）目前走公网。
+- ⚠️ **部署假设为单实例**：进程内缓存（`WeatherCache`）、限流（`RateLimiter`）、登录锁定（`LoginAttemptService`）与定时任务均为单机内存实现；多实例部署需替换为 Redis/网关限流并加 `@SchedulerLock`，否则跨节点缓存不一致、限流/锁定形同虚设、定时任务重复执行。
+- ⚠️ `user_warning_notice` 为预留表：当前预警按收藏城市实时查询展示，尚未实现"逐用户落库通知 + 已读"链路。
 
 ---
 
