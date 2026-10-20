@@ -41,7 +41,8 @@
                     <input type="text" class="form-control border-0 py-3" name="city"
                            placeholder="输入城市名称查看统计数据，如：北京、上海、深圳..." required
                            th:value="${currentCity}">
-                    <input type="hidden" name="year" th:value="${year}">
+                    <input type="hidden" name="startMonth" th:value="${startMonth}">
+                    <input type="hidden" name="endMonth" th:value="${endMonth}">
                     <button class="btn btn-primary px-4" type="submit">
                         <i class="bi bi-bar-chart me-1"></i>查询统计
                     </button>
@@ -49,23 +50,25 @@
             </div>
         </div>
 
-        <!-- 年份选择器 -->
+        <!-- 月份区间查询（以当前时间为上限） -->
         <div th:if="${currentCityCode}" class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
             <h4>
                 <i class="bi bi-geo-alt text-primary me-2"></i>
                 <span th:text="${currentCity}">北京</span> - 天气数据统计
             </h4>
-            <div class="d-flex align-items-center gap-2">
-                <form th:action="@{/weather/statistics/search}" method="get" class="d-flex align-items-center gap-2">
-                    <input type="hidden" name="city" th:value="${currentCity}">
-                    <label for="yearSelect" class="form-label mb-0 text-nowrap">选择年份：</label>
-                    <select class="form-select form-select-sm" id="yearSelect" name="year" style="width: auto;" onchange="this.form.submit()">
-                        <option th:each="y : ${years}"
-                                th:value="${y}" th:text="${y} + '年'"
-                                th:selected="${y == year}">2026年</option>
-                    </select>
-                </form>
-            </div>
+            <form th:action="@{/weather/statistics/search}" method="get"
+                  class="d-flex align-items-center gap-2 flex-wrap">
+                <input type="hidden" name="city" th:value="${currentCity}">
+                <label for="startMonth" class="form-label mb-0 text-nowrap">统计区间：</label>
+                <input type="month" class="form-control form-control-sm" id="startMonth" name="startMonth"
+                       th:value="${startMonth}" th:max="${currentMonth}" style="width: auto;">
+                <span class="text-muted">至</span>
+                <input type="month" class="form-control form-control-sm" id="endMonth" name="endMonth"
+                       aria-label="结束月份" th:value="${endMonth}" th:max="${currentMonth}" style="width: auto;">
+                <button class="btn btn-primary btn-sm" type="submit">
+                    <i class="bi bi-search me-1"></i>查询
+                </button>
+            </form>
         </div>
 
         <!-- 错误消息 -->
@@ -85,8 +88,9 @@
                 <strong th:if="${estimated}">部分数据为气候常理估算。</strong>
                 <strong th:unless="${estimated}">数据基于实测天气记录。</strong>
                 <span class="small d-block mt-1">
-                    <span th:text="${currentCity}">北京</span>
-                    <span th:text="${year}">2026</span> 年实测样本
+                    统计区间 <strong th:text="${startMonth}">2026-01</strong> 至
+                    <strong th:text="${endMonth}">2026-10</strong>（以当前时间为准，未来月份不展示）·
+                    <span th:text="${currentCity}">北京</span> 实测样本
                     <strong th:text="${realDays}">0</strong> 天。
                     <span th:if="${estimated}"
                           class="text-muted">当月实测样本不足（&lt;28 天）时，系统按城市气候常理（历史同期均值 + 季节规律）推算，仅供趋势参考，不代表真实观测值。</span>
@@ -159,7 +163,7 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead>
                                 <tr>
-                                    <th class="text-center">月份</th>
+                                    <th class="text-center">年月</th>
                                     <th class="text-center">平均温度</th>
                                     <th class="text-center">最高温度</th>
                                     <th class="text-center">最低温度</th>
@@ -172,7 +176,7 @@
                             </thead>
                             <tbody>
                                 <tr th:each="stat : ${statistics}">
-                                    <td class="text-center fw-bold" th:text="${stat.statMonth} + '月'">1月</td>
+                                    <td class="text-center fw-bold" th:text="${stat.statYear} + '年' + ${stat.statMonth} + '月'">2026年1月</td>
                                     <td class="text-center" th:text="${stat.avgTemp != null ? #numbers.formatDecimal(stat.avgTemp, 1, 1) + '°C' : '--'}">5.2°C</td>
                                     <td class="text-center text-danger" th:text="${stat.maxTemp != null ? #numbers.formatDecimal(stat.maxTemp, 1, 1) + '°C' : '--'}">30.5°C</td>
                                     <td class="text-center text-info" th:text="${stat.minTemp != null ? #numbers.formatDecimal(stat.minTemp, 1, 1) + '°C' : '--'}">-5.2°C</td>
@@ -198,7 +202,7 @@
                 </span>
                 <span th:unless="${currentCity}">请先搜索城市</span>
             </h4>
-            <p class="text-muted" th:if="${currentCity}">所选年份暂无天气统计数据，请尝试选择其他年份或搜索其他城市</p>
+            <p class="text-muted" th:if="${currentCity}">所选区间内暂无天气统计数据，请调整统计区间或搜索其他城市</p>
             <p class="text-muted" th:unless="${currentCity}">在上方搜索框中输入城市名称，即可查看该城市的历年天气数据统计</p>
         </div>
     </div>
@@ -222,8 +226,13 @@
             var humidityData = [];
             var totalSunny = 0, totalCloudy = 0, totalRain = 0;
 
+            // 区间跨年时，图表标签带上年份；单年只显示月份
+            var yearSet = {};
+            statistics.forEach(function(s) { yearSet[s.statYear] = 1; });
+            var multiYear = Object.keys(yearSet).length > 1;
+
             statistics.forEach(function(s) {
-                months.push(s.statMonth + '月');
+                months.push((multiYear ? (s.statYear + '年') : '') + s.statMonth + '月');
                 avgTemps.push(s.avgTemp != null ? parseFloat(s.avgTemp) : null);
                 maxTemps.push(s.maxTemp != null ? parseFloat(s.maxTemp) : null);
                 minTemps.push(s.minTemp != null ? parseFloat(s.minTemp) : null);

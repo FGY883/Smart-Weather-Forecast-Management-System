@@ -85,17 +85,18 @@ function addFavorite(city, cityCode) {
     fetch('/api/favorite/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `city=${encodeURIComponent(city)}&cityCode=${cityCode}`
+        body: `city=${encodeURIComponent(city)}&cityCode=${encodeURIComponent(cityCode)}`
     })
     .then(res => res.json())
     .then(data => {
         if (data.code === 200) {
             showToast('收藏成功', 'success');
-            const btn = document.querySelector('.btn-favorite');
+            const btn = document.getElementById('favoriteBtn');
             if (btn) {
-                btn.classList.add('active');
-                btn.innerHTML = '<i class="bi bi-star-fill"></i> 已收藏';
-                btn.onclick = () => removeFavoriteByCityCode(cityCode);
+                btn.classList.remove('btn-outline-warning');
+                btn.classList.add('btn-warning');
+                btn.innerHTML = '<i class="bi bi-star-fill me-1"></i>已收藏';
+                btn.onclick = () => toggleFavorite(false, btn);
             }
         } else {
             showToast(data.msg || '收藏失败', 'warning');
@@ -119,7 +120,8 @@ function removeFavoriteByCityCode(cityCode) {
                 removeFavorite(fav.id);
             }
         }
-    });
+    })
+    .catch(() => showToast('请求失败', 'danger'));
 }
 
 /**
@@ -136,16 +138,12 @@ function removeFavorite(favoriteId) {
     .then(data => {
         if (data.code === 200) {
             showToast('已取消收藏', 'info');
-            const btn = document.querySelector('.btn-favorite');
+            const btn = document.getElementById('favoriteBtn');
             if (btn) {
-                btn.classList.remove('active');
-                btn.innerHTML = '<i class="bi bi-star"></i> 收藏';
-                // 重新绑定点击事件（需要cityCode）
-                const cityCode = btn.dataset.cityCode;
-                const city = btn.dataset.city;
-                if (cityCode && city) {
-                    btn.onclick = () => addFavorite(city, cityCode);
-                }
+                btn.classList.remove('btn-warning');
+                btn.classList.add('btn-outline-warning');
+                btn.innerHTML = '<i class="bi bi-star me-1"></i>收藏';
+                btn.onclick = () => toggleFavorite(true, btn);
             }
             // 如果在收藏列表页面，移除对应元素
             const item = document.querySelector(`[data-fav-id="${favoriteId}"]`);
@@ -158,7 +156,7 @@ function removeFavorite(favoriteId) {
 }
 
 /**
- * 切换收藏状态
+ * 切换收藏状态：isFavorited=true 表示"当前未收藏、点击添加"
  */
 function toggleFavorite(isFavorited, btn) {
     if (!requireLogin()) return;
@@ -172,25 +170,33 @@ function toggleFavorite(isFavorited, btn) {
 }
 
 /**
- * 显示提示消息
+ * 显示提示消息（消息按纯文本写入，避免 XSS）
  */
 function showToast(message, type = 'info') {
-    const toastContainer = document.getElementById('toastContainer');
+    let toastContainer = document.getElementById('toastContainer');
     if (!toastContainer) {
-        const container = document.createElement('div');
-        container.id = 'toastContainer';
-        container.style.cssText = 'position:fixed;top:80px;right:20px;z-index:9999;';
-        document.body.appendChild(container);
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toastContainer';
+        toastContainer.style.cssText = 'position:fixed;top:80px;right:20px;z-index:9999;';
+        document.body.appendChild(toastContainer);
     }
 
     const toast = document.createElement('div');
     toast.className = `alert alert-${type} alert-dismissible fade show`;
     toast.style.cssText = 'min-width:280px;box-shadow:0 4px 12px rgba(0,0,0,0.15);border-radius:8px;animation:fadeIn 0.3s ease;';
-    toast.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    document.getElementById('toastContainer').appendChild(toast);
+
+    const msgNode = document.createElement('span');
+    msgNode.textContent = message;               // 文本节点，杜绝 HTML 注入
+    toast.appendChild(msgNode);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'btn-close';
+    closeBtn.setAttribute('data-bs-dismiss', 'alert');
+    closeBtn.setAttribute('aria-label', 'Close');
+    toast.appendChild(closeBtn);
+
+    toastContainer.appendChild(toast);
 
     setTimeout(() => {
         toast.classList.remove('show');
@@ -216,7 +222,7 @@ function loadFavorites() {
                     <div class="list-group-item d-flex justify-content-between align-items-center" data-fav-id="${fav.id}">
                         <div>
                             <i class="bi bi-geo-alt-fill text-primary me-2"></i>
-                            <a href="/weather/detail/${fav.cityCode}?cityName=${encodeURIComponent(fav.city)}" class="text-decoration-none">
+                            <a href="/weather/detail/${encodeURIComponent(fav.cityCode)}?cityName=${encodeURIComponent(fav.city)}" class="text-decoration-none">
                                 <strong>${esc(fav.city)}</strong>
                             </a>
                         </div>
@@ -275,185 +281,6 @@ function loadPushRecords() {
 }
 
 /**
- * 初始化AI预测图表 (ECharts)
- */
-function initAiForecastChart(predictions) {
-    if (!predictions || predictions.length === 0) return;
-
-    const chartDom = document.getElementById('aiForecastChart');
-    if (!chartDom) return;
-
-    const chart = echarts.init(chartDom);
-    const dates = predictions.map(p => p.targetDate);
-    const tempMax = predictions.map(p => p.tempMaxPred);
-    const tempMin = predictions.map(p => p.tempMinPred);
-
-    const option = {
-        tooltip: { trigger: 'axis' },
-        legend: { data: ['预测最高温', '预测最低温'], top: 10 },
-        grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-        xAxis: {
-            type: 'category',
-            data: dates,
-            axisLabel: { formatter: val => val ? val.substring(5) : '' }
-        },
-        yAxis: {
-            type: 'value',
-            name: '温度(℃)',
-            axisLabel: { formatter: '{value}℃' }
-        },
-        series: [
-            {
-                name: '预测最高温',
-                type: 'line',
-                data: tempMax,
-                smooth: true,
-                lineStyle: { width: 3 },
-                itemStyle: { color: '#E74C3C' },
-                areaStyle: { color: 'rgba(231, 76, 60, 0.1)' },
-                markPoint: {
-                    data: [
-                        { type: 'max', name: '最高值' }
-                    ]
-                }
-            },
-            {
-                name: '预测最低温',
-                type: 'line',
-                data: tempMin,
-                smooth: true,
-                lineStyle: { width: 3 },
-                itemStyle: { color: '#3498DB' },
-                areaStyle: { color: 'rgba(52, 152, 219, 0.1)' },
-                markPoint: {
-                    data: [
-                        { type: 'min', name: '最低值' }
-                    ]
-                }
-            }
-        ]
-    };
-
-    chart.setOption(option);
-    window.addEventListener('resize', () => chart.resize());
-}
-
-/**
- * 初始化统计图表 (ECharts)
- */
-function initStatisticsCharts(stats) {
-    if (!stats || stats.length === 0) return;
-
-    const months = stats.map(s => s.statMonth + '月');
-    const avgTemp = stats.map(s => s.avgTemp);
-    const maxTemp = stats.map(s => s.maxTemp);
-    const minTemp = stats.map(s => s.minTemp);
-    const precip = stats.map(s => s.totalPrecip);
-    const humidity = stats.map(s => s.avgHumidity);
-    const rainDays = stats.map(s => s.rainDays);
-    const sunnyDays = stats.map(s => s.sunnyDays);
-    const cloudyDays = stats.map(s => s.cloudyDays);
-
-    // 温度趋势图
-    const tempChartDom = document.getElementById('tempChart');
-    if (tempChartDom) {
-        const tempChart = echarts.init(tempChartDom);
-        tempChart.setOption({
-            tooltip: { trigger: 'axis' },
-            legend: { data: ['平均温度', '最高温度', '最低温度'], top: 10 },
-            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-            xAxis: { type: 'category', data: months },
-            yAxis: { type: 'value', name: '温度(℃)' },
-            series: [
-                { name: '平均温度', type: 'line', data: avgTemp, smooth: true, lineStyle: { width: 3 }, itemStyle: { color: '#4A90D9' } },
-                { name: '最高温度', type: 'line', data: maxTemp, smooth: true, lineStyle: { width: 2, type: 'dashed' }, itemStyle: { color: '#E74C3C' } },
-                { name: '最低温度', type: 'line', data: minTemp, smooth: true, lineStyle: { width: 2, type: 'dashed' }, itemStyle: { color: '#3498DB' } }
-            ]
-        });
-        window.addEventListener('resize', () => tempChart.resize());
-    }
-
-    // 降水量柱状图
-    const precipChartDom = document.getElementById('precipChart');
-    if (precipChartDom) {
-        const precipChart = echarts.init(precipChartDom);
-        precipChart.setOption({
-            tooltip: { trigger: 'axis' },
-            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-            xAxis: { type: 'category', data: months },
-            yAxis: { type: 'value', name: '降水量(mm)' },
-            series: [{
-                name: '月降水量',
-                type: 'bar',
-                data: precip,
-                itemStyle: {
-                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                        { offset: 0, color: '#6DB3F2' },
-                        { offset: 1, color: '#4A90D9' }
-                    ]),
-                    borderRadius: [6, 6, 0, 0]
-                }
-            }]
-        });
-        window.addEventListener('resize', () => precipChart.resize());
-    }
-
-    // 天气类型分布饼图
-    const pieChartDom = document.getElementById('weatherPieChart');
-    if (pieChartDom) {
-        const totalRain = rainDays.reduce((a, b) => a + b, 0);
-        const totalSunny = sunnyDays.reduce((a, b) => a + b, 0);
-        const totalCloudy = cloudyDays.reduce((a, b) => a + b, 0);
-
-        const pieChart = echarts.init(pieChartDom);
-        pieChart.setOption({
-            tooltip: { trigger: 'item', formatter: '{b}: {c}天 ({d}%)' },
-            legend: { bottom: 10 },
-            series: [{
-                type: 'pie',
-                radius: ['40%', '65%'],
-                avoidLabelOverlap: false,
-                itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
-                label: { show: true, formatter: '{b}\n{c}天' },
-                data: [
-                    { value: totalSunny, name: '晴天', itemStyle: { color: '#FFD700' } },
-                    { value: totalCloudy, name: '多云/阴', itemStyle: { color: '#87CEEB' } },
-                    { value: totalRain, name: '雨天', itemStyle: { color: '#4682B4' } }
-                ]
-            }]
-        });
-        window.addEventListener('resize', () => pieChart.resize());
-    }
-
-    // 湿度折线图
-    const humidityChartDom = document.getElementById('humidityChart');
-    if (humidityChartDom) {
-        const humidityChart = echarts.init(humidityChartDom);
-        humidityChart.setOption({
-            tooltip: { trigger: 'axis' },
-            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-            xAxis: { type: 'category', data: months },
-            yAxis: { type: 'value', name: '湿度(%)', max: 100 },
-            series: [{
-                name: '平均湿度',
-                type: 'line',
-                data: humidity,
-                smooth: true,
-                lineStyle: { width: 3, color: '#2ECC71' },
-                itemStyle: { color: '#2ECC71' },
-                areaStyle: {
-                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                        { offset: 0, color: 'rgba(46, 204, 113, 0.3)' },
-                        { offset: 1, color: 'rgba(46, 204, 113, 0.05)' }
-                    ])
-                }
-            }]
-        });
-        window.addEventListener('resize', () => humidityChart.resize());
-    }
-}
-
-/**
  * 页面加载完成后初始化
  */
 document.addEventListener('DOMContentLoaded', function() {
@@ -491,7 +318,8 @@ function initCityGrid(gridId, addBtnId) {
     function fetchCard(city) {
         return fetch('/api/aether/weather?city=' + encodeURIComponent(city))
             .then(r => r.json())
-            .then(res => (res && res.code === 200 && res.data) ? res.data : null);
+            .then(res => (res && res.code === 200 && res.data) ? res.data : null)
+            .catch(() => null);
     }
 
     function renderEmpty() {
@@ -524,7 +352,7 @@ function initCityGrid(gridId, addBtnId) {
                     } else {
                         toast((res && res.msg) || '移除失败', 'danger');
                     }
-                });
+                }).catch(() => toast('移除失败', 'danger'));
             });
             card.appendChild(x);
         });
@@ -559,7 +387,7 @@ function initCityGrid(gridId, addBtnId) {
                 if (res && res.code === 200) { toast('已添加 ' + name, 'success'); loadGrid(); if (onDone) onDone(); }
                 else if (res && res.code === 401) { toast('请先登录', 'warning'); }
                 else { toast((res && res.msg) || '添加失败', 'warning'); loadGrid(); if (onDone) onDone(); }
-            });
+            }).catch(() => toast('添加失败', 'danger'));
         });
     }
 
@@ -581,12 +409,21 @@ function initCityGrid(gridId, addBtnId) {
         if (!sug) return;
         const kw = (q || '').trim();
         const list = (kw ? CITY_LIST.filter(c => c.indexOf(kw) >= 0) : CITY_LIST).slice(0, 12);
+        sug.innerHTML = '';
         if (!list.length) { sug.style.display = 'none'; return; }
-        sug.innerHTML = '<div class="sug-tip">点击或按回车添加</div>'
-            + list.map(c => `<div class="sug" data-city="${c}">${c}</div>`).join('');
+        const tip = document.createElement('div');
+        tip.className = 'sug-tip';
+        tip.textContent = '点击或按回车添加';
+        sug.appendChild(tip);
+        list.forEach(c => {
+            const el = document.createElement('div');
+            el.className = 'sug';
+            el.setAttribute('data-city', c);      // 用 DOM 赋值，避免属性/内容注入
+            el.textContent = c;
+            el.addEventListener('click', () => addCity(el.getAttribute('data-city'), closeBox));
+            sug.appendChild(el);
+        });
         sug.style.display = 'block';
-        sug.querySelectorAll('.sug').forEach(el =>
-            el.addEventListener('click', () => addCity(el.getAttribute('data-city'), closeBox)));
     }
     function openBox() {
         if (!box) return;

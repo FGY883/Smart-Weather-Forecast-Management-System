@@ -105,7 +105,7 @@
                                             <i class="bi bi-star-fill me-1"></i>已收藏
                                         </button>
                                         <button th:if="${isFavorited == null or !isFavorited}"
-                                                class="btn btn-outline-primary btn-sm rounded-pill" id="favoriteBtn"
+                                                class="btn btn-outline-warning btn-sm rounded-pill" id="favoriteBtn"
                                                 onclick="toggleFavorite(true, this)"
                                                 th:attr="data-city=${currentCity}, data-city-code=${currentCityCode}">
                                             <i class="bi bi-star me-1"></i>收藏
@@ -260,8 +260,8 @@
             </footer>
         </div>
 
-        <!-- 无数据提示 -->
-        <div th:if="${realtime == null and weatherError == null and cityCardsJson == null}" class="text-center py-5">
+        <!-- 无数据提示：仅当既无实时数据、也无任何错误时才出现 -->
+        <div th:if="${realtime == null and weatherError == null and searchError == null}" class="text-center py-5">
             <i class="bi bi-cloud-sun text-muted" style="font-size: 4rem;"></i>
             <h4 class="text-muted mt-3">搜索城市查看天气</h4>
             <p class="text-muted">在上方搜索框中输入城市名称，即可获取实时天气、7 天预报与城市卡网格</p>
@@ -275,52 +275,5 @@
     <script th:src="@{/js/main.js}"></script>
     <script th:src="@{/js/aether-card.js}"></script>
     <script>initCityGrid('cityGrid', 'cityAddBtn');</script>
-    <script>
-        function toggleFavorite(isAdd, btn) {
-            if (!requireLogin()) return;
-            var city = btn.getAttribute('data-city');
-            var cityCode = btn.getAttribute('data-city-code');
-            if (isAdd) {
-                fetch('/api/favorite/add', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: 'city=' + encodeURIComponent(city) + '&cityCode=' + encodeURIComponent(cityCode)
-                })
-                .then(function(res) { return res.json(); })
-                .then(function(data) {
-                    if (data.code === 200) {
-                        btn.className = 'btn btn-warning btn-sm rounded-pill';
-                        btn.innerHTML = '<i class="bi bi-star-fill me-1"></i>已收藏';
-                        btn.onclick = function() { toggleFavorite(false, btn); };
-                    } else {
-                        alert(data.msg);
-                    }
-                });
-            } else {
-                fetch('/api/favorite/list')
-                .then(function(res) { return res.json(); })
-                .then(function(data) {
-                    if (data.code === 200 && data.data) {
-                        var fav = data.data.find(function(f) { return f.cityCode === cityCode; });
-                        if (fav) {
-                            return fetch('/api/favorite/remove', {
-                                method: 'POST',
-                                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                                body: 'favoriteId=' + fav.id
-                            });
-                        }
-                    }
-                })
-                .then(function(res) { return res ? res.json() : null; })
-                .then(function(data) {
-                    if (data && data.code === 200) {
-                        btn.className = 'btn btn-outline-primary btn-sm rounded-pill';
-                        btn.innerHTML = '<i class="bi bi-star me-1"></i>收藏';
-                        btn.onclick = function() { toggleFavorite(true, btn); };
-                    }
-                });
-            }
-        }
-    </script>
 </body>
 </html>
